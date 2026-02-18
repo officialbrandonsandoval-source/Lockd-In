@@ -244,10 +244,7 @@ export default function PulsePage() {
         data: { user },
       } = await supabase.auth.getUser();
 
-      if (!user) {
-        router.push('/');
-        return;
-      }
+      if (!user) return;
 
       // Load all pulses, most recent first
       const { data: weeklyPulses } = await supabase

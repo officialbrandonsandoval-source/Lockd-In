@@ -25,10 +25,7 @@ export default function EveningCheckinPage() {
         data: { user },
       } = await supabase.auth.getUser();
 
-      if (!user) {
-        router.push('/');
-        return;
-      }
+      if (!user) return;
 
       // Get user profile
       const { data: profile } = await supabase

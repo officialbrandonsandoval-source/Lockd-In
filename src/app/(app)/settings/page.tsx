@@ -233,10 +233,7 @@ export default function SettingsPage() {
           data: { user },
         } = await supabase.auth.getUser();
 
-        if (!user) {
-          router.push('/');
-          return;
-        }
+        if (!user) return;
 
         const { data: profile } = await supabase
           .from('profiles')

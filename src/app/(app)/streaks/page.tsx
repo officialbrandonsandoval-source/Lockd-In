@@ -118,10 +118,7 @@ export default function StreaksPage() {
         data: { user },
       } = await supabase.auth.getUser();
 
-      if (!user) {
-        router.push('/');
-        return;
-      }
+      if (!user) return;
 
       // Load streak
       const { data: streak } = await supabase
