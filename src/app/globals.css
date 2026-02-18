@@ -1,0 +1,322 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ========================================
+   Lockd In -- Dark Luxury Design System
+   ======================================== */
+
+:root {
+  /* --- Core Palette --- */
+  --background: #0A0A0A;
+  --background-secondary: #141414;
+  --foreground: #F5F0E8;
+
+  /* --- Surfaces --- */
+  --card: #1A1A1A;
+  --card-border: #2A2A2A;
+
+  /* --- Brand Accents --- */
+  --gold: #C9A84C;
+  --gold-rgb: 201, 168, 76;
+  --accent: #E8E0D0;
+
+  /* --- Typography --- */
+  --text-primary: #F5F0E8;
+  --text-secondary: #8A8578;
+
+  /* --- Semantic --- */
+  --danger: #8B2500;
+  --success: #2D5A27;
+
+  /* --- Misc --- */
+  --radius: 0.75rem;
+  --transition-fast: 150ms ease;
+  --transition-base: 250ms ease;
+}
+
+/* ========================================
+   Base Styles
+   ======================================== */
+
+@layer base {
+  *,
+  *::before,
+  *::after {
+    border-color: var(--card-border);
+  }
+
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    color: var(--text-primary);
+    background-color: var(--background);
+    font-family: "DM Sans", system-ui, sans-serif;
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  /* --- Noise Texture Overlay --- */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    pointer-events: none;
+    opacity: 0.035;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
+    background-repeat: repeat;
+    background-size: 256px 256px;
+  }
+
+  /* --- Headings default to display font --- */
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: "Playfair Display", Georgia, serif;
+    color: var(--text-primary);
+    letter-spacing: -0.01em;
+  }
+
+  /* --- Selection --- */
+  ::selection {
+    background-color: rgba(201, 168, 76, 0.25);
+    color: var(--text-primary);
+  }
+}
+
+/* ========================================
+   Custom Scrollbar (Dark Theme)
+   ======================================== */
+
+@layer base {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--card-border) transparent;
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background-color: var(--card-border);
+    border-radius: 9999px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: var(--gold);
+  }
+
+  ::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+}
+
+/* ========================================
+   Focus Ring Styles (Gold Accent)
+   ======================================== */
+
+@layer base {
+  *:focus-visible {
+    outline: 2px solid var(--gold);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+
+  /* Remove default outline for mouse users */
+  *:focus:not(:focus-visible) {
+    outline: none;
+  }
+}
+
+/* ========================================
+   Gold Shimmer Animation Keyframes
+   ======================================== */
+
+@keyframes goldShimmer {
+  0% {
+    background-position: -200% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+@keyframes subtlePulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+@keyframes borderGlow {
+  0%,
+  100% {
+    border-color: rgba(201, 168, 76, 0.2);
+  }
+  50% {
+    border-color: rgba(201, 168, 76, 0.5);
+  }
+}
+
+/* ========================================
+   Component Layer -- Reusable Patterns
+   ======================================== */
+
+@layer components {
+  /* --- Glass Effect --- */
+  .glass {
+    background: rgba(26, 26, 26, 0.6);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(42, 42, 42, 0.5);
+  }
+
+  .glass-heavy {
+    background: rgba(26, 26, 26, 0.8);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(42, 42, 42, 0.7);
+  }
+
+  /* --- Gold Shimmer Text --- */
+  .text-shimmer {
+    background: linear-gradient(
+      90deg,
+      #C9A84C 0%,
+      #E8E0D0 40%,
+      #C9A84C 60%,
+      #E8E0D0 100%
+    );
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: goldShimmer 3s ease-in-out infinite;
+  }
+
+  /* --- Gold Gradient Text (Static) --- */
+  .text-gold-gradient {
+    background: linear-gradient(135deg, #C9A84C 0%, #E8E0D0 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  /* --- Card Surface --- */
+  .surface-card {
+    background-color: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius);
+  }
+
+  /* --- Gold Border Glow --- */
+  .border-glow {
+    border: 1px solid rgba(201, 168, 76, 0.2);
+    animation: borderGlow 3s ease-in-out infinite;
+  }
+
+  /* --- Shimmer Background (for loading states) --- */
+  .shimmer-bg {
+    background: linear-gradient(
+      90deg,
+      var(--card) 0%,
+      rgba(201, 168, 76, 0.06) 50%,
+      var(--card) 100%
+    );
+    background-size: 400% 100%;
+    animation: goldShimmer 2.5s ease-in-out infinite;
+  }
+}
+
+/* ========================================
+   Utility Layer
+   ======================================== */
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  /* --- Noise Overlay (applied to individual elements) --- */
+  .noise-overlay {
+    position: relative;
+  }
+
+  .noise-overlay::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.04;
+    border-radius: inherit;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
+    background-repeat: repeat;
+    background-size: 256px 256px;
+  }
+
+  /* --- Gradient Border Utility --- */
+  .gradient-border {
+    position: relative;
+    border: none;
+  }
+
+  .gradient-border::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    padding: 1px;
+    border-radius: inherit;
+    background: linear-gradient(135deg, rgba(201, 168, 76, 0.4), rgba(42, 42, 42, 0.6));
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+
+  /* --- Gold Underline --- */
+  .gold-underline {
+    position: relative;
+    display: inline-block;
+  }
+
+  .gold-underline::after {
+    content: "";
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 100%;
+    height: 1px;
+    background: linear-gradient(90deg, #C9A84C, transparent);
+  }
+
+  /* --- Fade Edges (for scroll containers) --- */
+  .fade-edges {
+    mask-image: linear-gradient(
+      to right,
+      transparent,
+      black 5%,
+      black 95%,
+      transparent
+    );
+  }
+}

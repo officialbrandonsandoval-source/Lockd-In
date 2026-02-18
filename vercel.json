@@ -1,0 +1,16 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/morning-agent",
+      "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/cron/evening-agent",
+      "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/cron/weekly-pulse",
+      "schedule": "0 20 * * 0"
+    }
+  ]
+}
