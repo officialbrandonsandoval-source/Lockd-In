@@ -91,6 +91,7 @@ export default function SharePage() {
   const [activeTab, setActiveTab] = useState<CardType>("blueprint_summary");
   const [generating, setGenerating] = useState(false);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
+  const [generateError, setGenerateError] = useState<string | null>(null);
   const [streakData, setStreakData] = useState<Streak | null>(null);
   const [pulseData, setPulseData] = useState<WeeklyPulse | null>(null);
   const [dataLoaded, setDataLoaded] = useState(false);
@@ -184,6 +185,7 @@ export default function SharePage() {
   const handleGenerate = useCallback(async () => {
     setGenerating(true);
     setShareUrl(null);
+    setGenerateError(null);
 
     try {
       const response = await fetch("/api/share/generate", {
@@ -197,10 +199,10 @@ export default function SharePage() {
       if (data.success) {
         setShareUrl(data.shareUrl);
       } else {
-        console.error("[share] Generation failed:", data.error);
+        setGenerateError(data.error || "Failed to generate share card.");
       }
-    } catch (err) {
-      console.error("[share] Generation error:", err);
+    } catch {
+      setGenerateError("Something went wrong. Please try again.");
     } finally {
       setGenerating(false);
     }
@@ -311,6 +313,13 @@ export default function SharePage() {
         transition={{ delay: 0.3 }}
         className="flex flex-col gap-4 max-w-sm mx-auto"
       >
+        {/* Error message */}
+        {generateError && (
+          <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/30 mb-4">
+            <p className="text-sm text-red-400">{generateError}</p>
+          </div>
+        )}
+
         {/* Generate share link */}
         {!shareUrl && (
           <motion.button

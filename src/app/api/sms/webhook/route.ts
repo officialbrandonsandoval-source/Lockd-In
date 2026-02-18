@@ -155,22 +155,27 @@ async function handleMorningReply(
   };
 
   if (existingCheckinId) {
-    await supabase
+    const { error } = await supabase
       .from("daily_checkins")
       .update(checkinData)
       .eq("id", existingCheckinId);
+    if (error) console.error("[sms/webhook] Failed to update morning check-in:", error.message);
   } else {
-    await supabase.from("daily_checkins").insert({
+    const { error } = await supabase.from("daily_checkins").insert({
       user_id: userId,
       checkin_date: todayISO,
       ...checkinData,
     });
+    if (error) console.error("[sms/webhook] Failed to insert morning check-in:", error.message);
   }
 
   // Update streak
   await updateStreak(supabase, userId, todayISO);
 
   const priorityCount = priorities.length;
+  if (priorityCount === 0) {
+    return `Hey ${userName}, I didn't catch any priorities. Reply with your top 3 things to focus on today (numbered 1-3).`;
+  }
   return `Locked in, ${userName}! ${priorityCount} priorit${priorityCount === 1 ? "y" : "ies"} set for today. Go make it count. You will hear from me tonight to reflect.`;
 }
 
@@ -254,7 +259,7 @@ async function handleEveningReply(
     ? morningPriorities.filter((p) => p.completed).length
     : null;
 
-  await supabase
+  const { error } = await supabase
     .from("daily_checkins")
     .update({
       evening_wins: wins.length > 0 ? wins.slice(0, 3) : null,
@@ -265,6 +270,7 @@ async function handleEveningReply(
       evening_completed_at: new Date().toISOString(),
     })
     .eq("id", checkinId);
+  if (error) console.error("[sms/webhook] Failed to update evening check-in:", error.message);
 
   return `Reflection logged, ${userName}. ${wins.length > 0 ? `${wins.length} win${wins.length === 1 ? "" : "s"} celebrated. ` : ""}Rest well tonight, King. Tomorrow is another opportunity to build your legacy.`;
 }
@@ -307,13 +313,20 @@ function isNumberedItem(line: string): boolean {
 }
 
 function normalizePhone(phone: string): string {
-  // Remove all non-digit characters
   const digits = phone.replace(/\D/g, "");
-  // If it starts with 1 and has 11 digits, strip the leading 1
+  // 11 digits starting with 1 → E.164 format +1XXXXXXXXXX
   if (digits.length === 11 && digits.startsWith("1")) {
     return `+${digits}`;
   }
-  return phone;
+  // 10 digits → add +1 prefix for US numbers
+  if (digits.length === 10) {
+    return `+1${digits}`;
+  }
+  // Already has + prefix or other format — return as-is
+  if (phone.startsWith("+")) {
+    return phone;
+  }
+  return `+${digits}`;
 }
 
 function getTodayInTimezone(timezone: string): string {
