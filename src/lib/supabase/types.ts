@@ -333,61 +333,64 @@ export type SmsLogUpdate = Partial<Omit<SmsLogInsert, "id">>;
 // Database type (mirrors Supabase generated schema shape)
 // ---------------------------------------------------------------------------
 
+// Helper to satisfy Supabase GenericTable's Record<string, unknown> constraint
+type WithIndex<T> = T & Record<string, unknown>;
+
 export interface Database {
   public: {
     Tables: {
       profiles: {
-        Row: Profile;
-        Insert: ProfileInsert;
-        Update: ProfileUpdate;
+        Row: WithIndex<Profile>;
+        Insert: WithIndex<ProfileInsert>;
+        Update: WithIndex<ProfileUpdate>;
         Relationships: [];
       };
       assessment_responses: {
-        Row: AssessmentResponse;
-        Insert: AssessmentResponseInsert;
-        Update: AssessmentResponseUpdate;
+        Row: WithIndex<AssessmentResponse>;
+        Insert: WithIndex<AssessmentResponseInsert>;
+        Update: WithIndex<AssessmentResponseUpdate>;
         Relationships: [];
       };
       blueprints: {
-        Row: Blueprint;
-        Insert: BlueprintInsert;
-        Update: BlueprintUpdate;
+        Row: WithIndex<Blueprint>;
+        Insert: WithIndex<BlueprintInsert>;
+        Update: WithIndex<BlueprintUpdate>;
         Relationships: [];
       };
       daily_checkins: {
-        Row: DailyCheckin;
-        Insert: DailyCheckinInsert;
-        Update: DailyCheckinUpdate;
+        Row: WithIndex<DailyCheckin>;
+        Insert: WithIndex<DailyCheckinInsert>;
+        Update: WithIndex<DailyCheckinUpdate>;
         Relationships: [];
       };
       streaks: {
-        Row: Streak;
-        Insert: StreakInsert;
-        Update: StreakUpdate;
+        Row: WithIndex<Streak>;
+        Insert: WithIndex<StreakInsert>;
+        Update: WithIndex<StreakUpdate>;
         Relationships: [];
       };
       weekly_pulses: {
-        Row: WeeklyPulse;
-        Insert: WeeklyPulseInsert;
-        Update: WeeklyPulseUpdate;
+        Row: WithIndex<WeeklyPulse>;
+        Insert: WithIndex<WeeklyPulseInsert>;
+        Update: WithIndex<WeeklyPulseUpdate>;
         Relationships: [];
       };
       share_cards: {
-        Row: ShareCard;
-        Insert: ShareCardInsert;
-        Update: ShareCardUpdate;
+        Row: WithIndex<ShareCard>;
+        Insert: WithIndex<ShareCardInsert>;
+        Update: WithIndex<ShareCardUpdate>;
         Relationships: [];
       };
       referrals: {
-        Row: Referral;
-        Insert: ReferralInsert;
-        Update: ReferralUpdate;
+        Row: WithIndex<Referral>;
+        Insert: WithIndex<ReferralInsert>;
+        Update: WithIndex<ReferralUpdate>;
         Relationships: [];
       };
       sms_logs: {
-        Row: SmsLog;
-        Insert: SmsLogInsert;
-        Update: SmsLogUpdate;
+        Row: WithIndex<SmsLog>;
+        Insert: WithIndex<SmsLogInsert>;
+        Update: WithIndex<SmsLogUpdate>;
         Relationships: [];
       };
     };

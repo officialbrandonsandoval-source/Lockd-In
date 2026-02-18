@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import type { AssessmentResponseInsert, ProfileUpdate } from "@/lib/supabase/types";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -48,7 +49,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Build rows for assessment_responses table
-    const rows = body.responses.map((r) => ({
+    const rows: AssessmentResponseInsert[] = body.responses.map((r) => ({
       user_id: user.id,
       section: r.section,
       question_key: r.questionKey,
@@ -66,7 +67,7 @@ export async function POST(request: NextRequest) {
     // Insert all responses
     const { error: insertError } = await supabase
       .from("assessment_responses")
-      .insert(rows);
+      .insert(rows as any); // eslint-disable-line @typescript-eslint/no-explicit-any
 
     if (insertError) {
       console.error("[assessment/submit] Insert error:", insertError);
@@ -96,7 +97,7 @@ export async function POST(request: NextRequest) {
       childrenResponse.toLowerCase() !== "n/a";
 
     // Build profile update
-    const profileUpdate: Record<string, unknown> = {};
+    const profileUpdate: ProfileUpdate = {};
 
     if (nameResponse) {
       profileUpdate.full_name = nameResponse;
@@ -119,7 +120,7 @@ export async function POST(request: NextRequest) {
     if (Object.keys(profileUpdate).length > 0) {
       const { error: profileError } = await supabase
         .from("profiles")
-        .update(profileUpdate)
+        .update(profileUpdate as any) // eslint-disable-line @typescript-eslint/no-explicit-any
         .eq("id", user.id);
 
       if (profileError) {

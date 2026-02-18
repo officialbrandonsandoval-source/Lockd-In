@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { generateBlueprint, type BlueprintContext } from "@/lib/ai/claude";
+import type {
+  AssessmentResponse,
+  Profile,
+  Blueprint,
+  Streak,
+} from "@/lib/supabase/types";
 
 // ---------------------------------------------------------------------------
 // GET /api/blueprint/generate?id=...
@@ -35,17 +41,19 @@ export async function GET(request: NextRequest) {
       query = query.eq("id", blueprintId);
     }
 
-    const { data: blueprint, error: fetchError } = await query
+    const { data, error: fetchError } = await query
       .order("generated_at", { ascending: false })
       .limit(1)
       .single();
 
-    if (fetchError || !blueprint) {
+    if (fetchError || !data) {
       return NextResponse.json(
         { error: "Blueprint not found." },
         { status: 404 }
       );
     }
+
+    const blueprint = data as unknown as Blueprint;
 
     return NextResponse.json({ blueprint });
   } catch (err) {
@@ -80,25 +88,29 @@ export async function POST() {
     }
 
     // Fetch assessment responses
-    const { data: responses, error: fetchError } = await supabase
+    const { data: rawResponses, error: fetchError } = await supabase
       .from("assessment_responses")
       .select("*")
       .eq("user_id", user.id)
       .order("created_at", { ascending: true });
 
-    if (fetchError || !responses || responses.length === 0) {
+    if (fetchError || !rawResponses || rawResponses.length === 0) {
       return NextResponse.json(
         { error: "No assessment responses found. Please complete the assessment first." },
         { status: 400 }
       );
     }
 
+    const responses = rawResponses as unknown as AssessmentResponse[];
+
     // Fetch user profile
-    const { data: profile } = await supabase
+    const { data: rawProfile } = await supabase
       .from("profiles")
       .select("*")
       .eq("id", user.id)
       .single();
+
+    const profile = rawProfile as unknown as Profile | null;
 
     // Build assessment data organized by section
     const assessmentBySection: Record<string, Record<string, unknown>> = {};
@@ -117,7 +129,10 @@ export async function POST() {
       (r) => r.question_key === "identity_age"
     );
 
-    const firstName = nameResponse?.response_text?.split(" ")[0] || profile?.full_name?.split(" ")[0] || "Brother";
+    const firstName =
+      nameResponse?.response_text?.split(" ")[0] ||
+      profile?.full_name?.split(" ")[0] ||
+      "Brother";
     const age = ageResponse?.response_text
       ? parseInt(ageResponse.response_text, 10)
       : undefined;
@@ -128,7 +143,8 @@ export async function POST() {
       userProfile: {
         id: user.id,
         firstName,
-        lastName: profile?.full_name?.split(" ").slice(1).join(" ") || undefined,
+        lastName:
+          profile?.full_name?.split(" ").slice(1).join(" ") || undefined,
         email: user.email,
         age: age && !isNaN(age) ? age : undefined,
         location:
@@ -159,52 +175,53 @@ export async function POST() {
     // Archive any existing active blueprints
     await supabase
       .from("blueprints")
-      .update({ status: "archived" })
+      .update({ status: "archived" } as any) // eslint-disable-line @typescript-eslint/no-explicit-any
       .eq("user_id", user.id)
       .eq("status", "active");
 
     // Insert the new blueprint
-    const { data: newBlueprint, error: insertError } = await supabase
+    const insertPayload = {
+      user_id: user.id,
+      version: 1,
+      status: "active",
+      identity_statement:
+        (blueprintData.identity_statement as string) || null,
+      purpose_statement:
+        (blueprintData.purpose_statement as string) || null,
+      family_vision: (blueprintData.family_vision as string) || null,
+      core_values:
+        (blueprintData.core_values as Record<string, unknown>[]) || null,
+      ninety_day_targets:
+        (blueprintData.ninety_day_targets as Record<string, unknown>[]) ||
+        null,
+      daily_non_negotiables:
+        (blueprintData.daily_non_negotiables as Record<string, unknown>[]) ||
+        null,
+      faith_commitments: blueprintData.faith_commitments
+        ? JSON.stringify(blueprintData.faith_commitments)
+        : null,
+      health_targets: blueprintData.health_targets
+        ? JSON.stringify(blueprintData.health_targets)
+        : null,
+      financial_targets: blueprintData.financial_targets
+        ? JSON.stringify(blueprintData.financial_targets)
+        : null,
+      relationship_commitments: blueprintData.relationship_commitments
+        ? JSON.stringify(blueprintData.relationship_commitments)
+        : null,
+      full_blueprint_markdown:
+        (blueprintData.full_blueprint_markdown as string) || null,
+      ai_analysis:
+        (blueprintData.ai_analysis as Record<string, unknown>) || null,
+    };
+
+    const { data: newBlueprintData, error: insertError } = await supabase
       .from("blueprints")
-      .insert({
-        user_id: user.id,
-        version: 1,
-        status: "active",
-        identity_statement:
-          (blueprintData.identity_statement as string) || null,
-        purpose_statement:
-          (blueprintData.purpose_statement as string) || null,
-        family_vision:
-          (blueprintData.family_vision as string) || null,
-        core_values:
-          (blueprintData.core_values as Record<string, unknown>[]) || null,
-        ninety_day_targets:
-          (blueprintData.ninety_day_targets as Record<string, unknown>[]) ||
-          null,
-        daily_non_negotiables:
-          (blueprintData.daily_non_negotiables as Record<string, unknown>[]) ||
-          null,
-        faith_commitments: blueprintData.faith_commitments
-          ? JSON.stringify(blueprintData.faith_commitments)
-          : null,
-        health_targets: blueprintData.health_targets
-          ? JSON.stringify(blueprintData.health_targets)
-          : null,
-        financial_targets: blueprintData.financial_targets
-          ? JSON.stringify(blueprintData.financial_targets)
-          : null,
-        relationship_commitments: blueprintData.relationship_commitments
-          ? JSON.stringify(blueprintData.relationship_commitments)
-          : null,
-        full_blueprint_markdown:
-          (blueprintData.full_blueprint_markdown as string) || null,
-        ai_analysis:
-          (blueprintData.ai_analysis as Record<string, unknown>) || null,
-      })
+      .insert(insertPayload as any) // eslint-disable-line @typescript-eslint/no-explicit-any
       .select("id")
       .single();
 
-    if (insertError || !newBlueprint) {
+    if (insertError || !newBlueprintData) {
       console.error("[blueprint/generate] Insert error:", insertError);
       return NextResponse.json(
         { error: "Failed to save Blueprint." },
@@ -212,19 +229,23 @@ export async function POST() {
       );
     }
 
+    const newBlueprint = newBlueprintData as unknown as { id: string };
+
     // Update profile: onboarding_completed = true
     await supabase
       .from("profiles")
-      .update({ onboarding_completed: true })
+      .update({ onboarding_completed: true } as any) // eslint-disable-line @typescript-eslint/no-explicit-any
       .eq("id", user.id);
 
-    // Create initial streak record
-    const { data: existingStreak } = await supabase
+    // Create initial streak record if one doesn't exist
+    const { data: existingStreakData } = await supabase
       .from("streaks")
       .select("id")
       .eq("user_id", user.id)
       .limit(1)
       .single();
+
+    const existingStreak = existingStreakData as unknown as Streak | null;
 
     if (!existingStreak) {
       await supabase.from("streaks").insert({
@@ -234,7 +255,7 @@ export async function POST() {
         total_checkins: 0,
         last_checkin_date: null,
         streak_started_at: new Date().toISOString(),
-      });
+      } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
     }
 
     return NextResponse.json({

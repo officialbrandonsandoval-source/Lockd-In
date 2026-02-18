@@ -80,60 +80,54 @@ export default function DashboardPage() {
       const weekStart = weekDates[0];
       const weekEnd = weekDates[6];
 
-      // Fetch all data in parallel (individual awaits to preserve types)
-      const profilePromise = supabase
+      // Fetch profile
+      const { data: profileData } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', user.id)
-        .single();
+        .single() as { data: Profile | null };
 
-      const checkinPromise = supabase
+      // Fetch today's checkin
+      const { data: checkinData } = await supabase
         .from('daily_checkins')
         .select('*')
         .eq('user_id', user.id)
         .eq('checkin_date', today)
-        .single();
+        .single() as { data: DailyCheckin | null };
 
-      const streakPromise = supabase
+      // Fetch streak
+      const { data: streakData } = await supabase
         .from('streaks')
         .select('*')
         .eq('user_id', user.id)
-        .single();
+        .single() as { data: Streak | null };
 
-      const blueprintPromise = supabase
+      // Fetch active blueprint
+      const { data: blueprintData } = await supabase
         .from('blueprints')
         .select('*')
         .eq('user_id', user.id)
         .eq('status', 'active')
         .order('version', { ascending: false })
         .limit(1)
-        .single();
+        .single() as { data: Blueprint | null };
 
-      const weekPromise = supabase
+      // Fetch this week's checkins
+      const { data: weekData } = await supabase
         .from('daily_checkins')
         .select('*')
         .eq('user_id', user.id)
         .gte('checkin_date', weekStart)
-        .lte('checkin_date', weekEnd);
+        .lte('checkin_date', weekEnd) as { data: DailyCheckin[] | null };
 
-      const [profileRes, checkinRes, streakRes, blueprintRes, weekRes] =
-        await Promise.all([
-          profilePromise,
-          checkinPromise,
-          streakPromise,
-          blueprintPromise,
-          weekPromise,
-        ]);
-
-      if (profileRes.data) setProfile(profileRes.data as Profile);
-      if (checkinRes.data) {
-        const checkin = checkinRes.data as DailyCheckin;
-        setTodayCheckin(checkin);
-        setPriorities(checkin.morning_priorities || []);
+      if (profileData) setProfile(profileData);
+      if (checkinData) {
+        setTodayCheckin(checkinData);
+        setPriorities(checkinData.morning_priorities || []);
       }
-      if (streakRes.data) setStreak(streakRes.data as Streak);
-      if (blueprintRes.data) setBlueprint(blueprintRes.data as Blueprint);
-      if (weekRes.data) setWeekCheckins(weekRes.data as DailyCheckin[]);
+      if (streakData) setStreak(streakData);
+      if (blueprintData) setBlueprint(blueprintData);
+      if (weekData) setWeekCheckins(weekData);
     } catch (err) {
       console.error('Dashboard fetch error:', err);
     } finally {
@@ -161,12 +155,12 @@ export default function DashboardPage() {
 
     const completedCount = updated.filter((p) => p.completed).length;
 
-    await supabase
-      .from('daily_checkins')
+    await (supabase
+      .from('daily_checkins') as ReturnType<typeof supabase.from>)
       .update({
-        morning_priorities: updated as PriorityItem[],
+        morning_priorities: updated,
         priorities_completed: completedCount,
-      } as Record<string, unknown>)
+      } as never)
       .eq('id', todayCheckin.id);
   };
 
