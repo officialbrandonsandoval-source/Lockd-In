@@ -57,20 +57,12 @@ export async function updateSession(request: NextRequest) {
   if (isProtectedRoute && !user) {
     const url = request.nextUrl.clone();
     url.pathname = '/';
-    return NextResponse.redirect(url);
-  }
-
-  // Redirect authenticated users away from onboarding pages they've already completed
-  // (welcome page should redirect to dashboard if already authenticated)
-  const publicOnlyPaths = ['/welcome'];
-  const isPublicOnlyRoute = publicOnlyPaths.some(
-    (path) => pathname === path || pathname.startsWith(path + '/')
-  );
-
-  if (isPublicOnlyRoute && user) {
-    const url = request.nextUrl.clone();
-    url.pathname = '/dashboard';
-    return NextResponse.redirect(url);
+    const redirectResponse = NextResponse.redirect(url);
+    // Forward session cookies so token refreshes aren't lost
+    supabaseResponse.cookies.getAll().forEach((cookie) => {
+      redirectResponse.cookies.set(cookie.name, cookie.value);
+    });
+    return redirectResponse;
   }
 
   return supabaseResponse;
