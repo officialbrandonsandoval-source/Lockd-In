@@ -230,7 +230,7 @@ export default function Home() {
               </span>
             </Link>
             <Link
-              href="/signup"
+              href="/dashboard"
               className="bg-[#C9A84C] text-[#0A0A0A] px-5 py-2.5 sm:px-6 sm:py-3 rounded-lg text-sm sm:text-base font-semibold hover:bg-[#d4b55e] transition-all duration-300 hover:shadow-[0_0_20px_rgba(201,168,76,0.3)] active:scale-[0.97]"
             >
               Start Your Blueprint
@@ -278,7 +278,7 @@ export default function Home() {
             transition={{ duration: 0.7, delay: 0.7, ease: [0.25, 0.4, 0.25, 1] }}
           >
             <Link
-              href="/signup"
+              href="/dashboard"
               className="inline-flex items-center gap-2 bg-[#C9A84C] text-[#0A0A0A] px-8 py-4 sm:px-10 sm:py-5 rounded-xl text-base sm:text-lg font-bold hover:bg-[#d4b55e] transition-all duration-300 hover:shadow-[0_0_30px_rgba(201,168,76,0.35)] active:scale-[0.97] group"
             >
               Start Your Blueprint — Free
@@ -439,7 +439,7 @@ export default function Home() {
 
           <motion.div variants={scaleIn}>
             <Link
-              href="/signup"
+              href="/dashboard"
               className="inline-flex items-center gap-2 bg-[#C9A84C] text-[#0A0A0A] px-8 py-4 sm:px-10 sm:py-5 rounded-xl text-base sm:text-lg font-bold hover:bg-[#d4b55e] transition-all duration-300 hover:shadow-[0_0_30px_rgba(201,168,76,0.35)] active:scale-[0.97] group"
             >
               Start Your Blueprint

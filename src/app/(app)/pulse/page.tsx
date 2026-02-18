@@ -245,7 +245,7 @@ export default function PulsePage() {
       } = await supabase.auth.getUser();
 
       if (!user) {
-        router.push('/login');
+        router.push('/');
         return;
       }
 
