@@ -4,7 +4,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { format, subDays, startOfWeek, parseISO, isSameDay } from 'date-fns';
+import { format, subDays, startOfWeek, parseISO } from 'date-fns';
 import { STREAK_MILESTONES } from '@/lib/utils/constants';
 import { getStreakTier } from '@/lib/utils/streaks';
 import type { Streak, DailyCheckin } from '@/lib/supabase/types';
