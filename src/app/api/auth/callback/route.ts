@@ -4,7 +4,7 @@ import { createServerClient } from '@supabase/ssr';
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get('code');
-  const next = searchParams.get('next') ?? '/onboarding/welcome';
+  const next = searchParams.get('next') ?? '/welcome';
 
   if (code) {
     const response = NextResponse.redirect(`${origin}${next}`);
@@ -41,13 +41,13 @@ export async function GET(request: NextRequest) {
 
         if (isNewUser) {
           // New user — send to onboarding
-          const redirectUrl = new URL('/onboarding/welcome', origin);
+          const redirectUrl = new URL('/welcome', origin);
           return NextResponse.redirect(redirectUrl.toString(), {
             headers: response.headers,
           });
         } else {
           // Existing user — send to dashboard
-          const redirectUrl = new URL('/app/dashboard', origin);
+          const redirectUrl = new URL('/dashboard', origin);
           return NextResponse.redirect(redirectUrl.toString(), {
             headers: response.headers,
           });

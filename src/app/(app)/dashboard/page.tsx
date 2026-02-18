@@ -309,7 +309,7 @@ export default function DashboardPage() {
         {/* View Blueprint link */}
         {blueprint && (
           <motion.div variants={itemVariants}>
-            <Link href="/app/blueprint">
+            <Link href="/blueprint">
               <motion.div
                 whileHover={{
                   borderColor: 'rgba(201, 168, 76, 0.4)',
