@@ -7,6 +7,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { sendSMS } from "@/lib/twilio/messages";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 // ---------------------------------------------------------------------------
 // POST /api/sms/send

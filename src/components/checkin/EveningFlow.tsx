@@ -56,7 +56,6 @@ const TOTAL_STEPS = 6;
 // ---------------------------------------------------------------------------
 
 export default function EveningFlow({
-  userName,
   morningPriorities,
   currentStreak,
 }: EveningFlowProps) {

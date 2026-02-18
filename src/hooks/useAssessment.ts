@@ -6,7 +6,6 @@ import type { AssessmentResponseInsert } from "@/lib/supabase/types";
 import { useAuth } from "./useAuth";
 import {
   ASSESSMENT_QUESTIONS,
-  ASSESSMENT_SECTIONS,
   TOTAL_ASSESSMENT_QUESTIONS,
   type AssessmentSection,
 } from "@/lib/utils/constants";

@@ -4,17 +4,20 @@
 
 import twilio from "twilio";
 
-const accountSid = process.env.TWILIO_ACCOUNT_SID;
-const authToken = process.env.TWILIO_AUTH_TOKEN;
+let twilioClient: ReturnType<typeof twilio> | null = null;
 
-if (!accountSid) {
-  throw new Error("Missing TWILIO_ACCOUNT_SID environment variable");
+export function getTwilioClient() {
+  if (twilioClient) return twilioClient;
+
+  const accountSid = process.env.TWILIO_ACCOUNT_SID;
+  const authToken = process.env.TWILIO_AUTH_TOKEN;
+
+  if (!accountSid || !authToken) {
+    throw new Error("Missing TWILIO_ACCOUNT_SID or TWILIO_AUTH_TOKEN environment variable");
+  }
+
+  twilioClient = twilio(accountSid, authToken);
+  return twilioClient;
 }
 
-if (!authToken) {
-  throw new Error("Missing TWILIO_AUTH_TOKEN environment variable");
-}
-
-const twilioClient = twilio(accountSid, authToken);
-
-export default twilioClient;
+export default getTwilioClient;

@@ -117,7 +117,7 @@ export function getStreakMessage(
 ): string {
   // Streak was broken — be gracious and encouraging
   if (streakBroken) {
-    return getStreakBrokenMessage(streakCount);
+    return getStreakBrokenMessage();
   }
 
   // Milestone celebrations
@@ -148,7 +148,7 @@ function getMilestoneMessage(streakCount: number): string {
   }
 }
 
-function getStreakBrokenMessage(_previousStreak: number): string {
+function getStreakBrokenMessage(): string {
   const messages = [
     "Welcome back, King. A setback is a setup for a comeback. Today is day 1 of your next streak.",
     "You missed a day, but you did not miss your calling. The fact that you are here shows your heart. Let us go.",

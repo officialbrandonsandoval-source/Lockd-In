@@ -7,9 +7,10 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { generateWeeklyPulse } from "@/lib/ai/claude";
 import { sendSMS } from "@/lib/twilio/messages";
 import { formatWeeklyPulse } from "@/lib/twilio/messages";
-import { format, subDays, startOfWeek, endOfWeek, getISOWeek } from "date-fns";
+import { format, startOfWeek, endOfWeek, getISOWeek } from "date-fns";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
 // ---------------------------------------------------------------------------
@@ -55,7 +56,7 @@ export async function GET(request: NextRequest) {
     // ── Process each user ─────────────────────────────────────────
     for (const user of users) {
       try {
-        const userTimezone = user.timezone || "America/New_York";
+        // Timezone available via user.timezone || "America/New_York"
         const now = new Date();
 
         // Calculate week range (Monday–Sunday)
