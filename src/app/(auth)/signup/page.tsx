@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createBrowserClient } from '@supabase/ssr';
 import { motion } from 'framer-motion';
@@ -9,13 +9,16 @@ import { motion } from 'framer-motion';
 export default function SignUpPage() {
   const searchParams = useSearchParams();
   const referralCode = searchParams.get('ref');
+  const router = useRouter();
 
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
+  const [redirecting, setRedirecting] = useState(false);
 
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -51,13 +54,18 @@ export default function SignUpPage() {
       return;
     }
 
+    if (password.length < 8) {
+      setError('Password must be at least 8 characters.');
+      return;
+    }
+
     setLoading(true);
 
     try {
-      const { error: authError } = await supabase.auth.signInWithOtp({
+      const { data, error: authError } = await supabase.auth.signUp({
         email,
+        password,
         options: {
-          emailRedirectTo: `${window.location.origin}/api/auth/callback`,
           data: {
             full_name: fullName.trim(),
             ...(referralCode ? { referral_code: referralCode } : {}),
@@ -70,7 +78,12 @@ export default function SignUpPage() {
         return;
       }
 
-      setSuccess(true);
+      if (data.session) {
+        setRedirecting(true);
+        router.push('/welcome');
+      } else {
+        setError('Please check your email to confirm your account, then sign in.');
+      }
     } catch {
       setError('Something went wrong. Please try again.');
     } finally {
@@ -109,7 +122,7 @@ export default function SignUpPage() {
     }
   };
 
-  if (success) {
+  if (redirecting) {
     return (
       <div className="min-h-screen bg-[#0A0A0A] flex items-center justify-center px-4">
         <motion.div
@@ -120,39 +133,17 @@ export default function SignUpPage() {
         >
           <div className="bg-[#1A1A1A] border border-[#2A2A2A] rounded-2xl p-8 shadow-card">
             <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-[#C9A84C]/10 flex items-center justify-center">
-              <svg
-                className="w-8 h-8 text-[#C9A84C]"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                />
+              <svg className="w-8 h-8 text-[#C9A84C] animate-spin" viewBox="0 0 24 24" fill="none">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
               </svg>
             </div>
             <h2 className="text-2xl font-display text-[#F5F0E8] mb-2">
-              Check your email
+              Account created!
             </h2>
             <p className="text-[#8A8578] text-sm leading-relaxed">
-              We sent a magic link to{' '}
-              <span className="text-[#C9A84C] font-medium">{email}</span>.
-              <br />
-              Click the link to create your account and start your Blueprint.
+              Setting up your Blueprint experience...
             </p>
-            <button
-              onClick={() => {
-                setSuccess(false);
-                setEmail('');
-                setFullName('');
-              }}
-              className="mt-6 text-sm text-[#8A8578] hover:text-[#C9A84C] transition-colors"
-            >
-              Use a different email
-            </button>
           </div>
         </motion.div>
       </div>
@@ -266,9 +257,46 @@ export default function SignUpPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
-                disabled={loading}
+                disabled={loading || redirecting}
                 className="w-full px-4 py-3 bg-[#141414] border border-[#2A2A2A] rounded-xl text-[#F5F0E8] placeholder-[#8A8578]/50 text-sm focus:outline-none focus:ring-2 focus:ring-[#C9A84C]/40 focus:border-[#C9A84C]/60 transition-all disabled:opacity-50"
               />
+            </div>
+
+            <div>
+              <label
+                htmlFor="password"
+                className="block text-sm font-medium text-[#8A8578] mb-1.5"
+              >
+                Password
+              </label>
+              <div className="relative">
+                <input
+                  id="password"
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="At least 8 characters"
+                  disabled={loading || redirecting}
+                  className="w-full px-4 py-3 bg-[#141414] border border-[#2A2A2A] rounded-xl text-[#F5F0E8] placeholder-[#8A8578]/50 text-sm focus:outline-none focus:ring-2 focus:ring-[#C9A84C]/40 focus:border-[#C9A84C]/60 transition-all disabled:opacity-50 pr-12"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8A8578] hover:text-[#C9A84C] transition-colors"
+                  tabIndex={-1}
+                >
+                  {showPassword ? (
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                    </svg>
+                  ) : (
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                  )}
+                </button>
+              </div>
             </div>
 
             <button
