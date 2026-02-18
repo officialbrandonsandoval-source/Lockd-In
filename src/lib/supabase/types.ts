@@ -16,20 +16,38 @@ export interface ChildDetail {
 export interface NinetyDayTarget {
   area: string;
   target: string;
-  measure: string;
-  deadline?: string;
+  measurement: string;
 }
 
 export interface DailyNonNegotiable {
-  activity: string;
-  time_of_day?: string;
-  duration_minutes?: number;
+  practice: string;
+  time: string | null;
 }
 
 export interface CoreValue {
-  value: string;
+  name: string;
   description: string;
-  rank?: number;
+  daily_practice: string;
+}
+
+export interface FaithCommitment {
+  practice: string;
+  frequency: string;
+}
+
+export interface HealthTarget {
+  target: string;
+  measurement: string;
+}
+
+export interface FinancialTarget {
+  target: string;
+  timeline: string;
+}
+
+export interface RelationshipCommitment {
+  relationship: string;
+  commitment: string;
 }
 
 export interface PriorityItem {

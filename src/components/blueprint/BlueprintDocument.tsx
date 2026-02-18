@@ -5,6 +5,10 @@ import type {
   CoreValue,
   NinetyDayTarget,
   DailyNonNegotiable,
+  FaithCommitment,
+  HealthTarget,
+  FinancialTarget,
+  RelationshipCommitment,
 } from '@/lib/supabase/types';
 import IdentityStatement from './IdentityStatement';
 import BlueprintSection from './BlueprintSection';
@@ -102,6 +106,19 @@ function RelationshipIcon() {
 }
 
 // ---------------------------------------------------------------------------
+// JSON field parser helper
+// ---------------------------------------------------------------------------
+
+function parseJsonField<T>(field: string | null): T | null {
+  if (!field) return null;
+  try {
+    return JSON.parse(field) as T;
+  } catch {
+    return null;
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
 
@@ -120,6 +137,12 @@ export default function BlueprintDocument({
     financial_targets,
     relationship_commitments,
   } = blueprint;
+
+  // Parse JSON string fields into typed arrays
+  const faithComm = parseJsonField<FaithCommitment[]>(faith_commitments);
+  const healthTgt = parseJsonField<HealthTarget[]>(health_targets);
+  const financialTgt = parseJsonField<FinancialTarget[]>(financial_targets);
+  const relComm = parseJsonField<RelationshipCommitment[]>(relationship_commitments);
 
   return (
     <div className="space-y-6">
@@ -157,15 +180,20 @@ export default function BlueprintDocument({
               >
                 <div className="flex items-start gap-3">
                   <span className="text-xs font-semibold text-[#C9A84C] bg-[#C9A84C]/10 px-2 py-1 rounded-md font-sans tabular-nums flex-shrink-0">
-                    {val.rank ?? i + 1}
+                    {i + 1}
                   </span>
                   <div className="min-w-0">
                     <h4 className="font-display text-[#E8E0D0] text-base mb-1">
-                      {val.value}
+                      {val.name}
                     </h4>
                     <p className="text-sm text-[#8A8578] font-sans leading-relaxed">
                       {val.description}
                     </p>
+                    {val.daily_practice && (
+                      <p className="text-xs text-[#C9A84C]/80 font-sans mt-1.5 italic">
+                        Daily practice: {val.daily_practice}
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -187,17 +215,12 @@ export default function BlueprintDocument({
                   <span className="text-xs font-semibold text-[#C9A84C] bg-[#C9A84C]/10 px-2 py-0.5 rounded-md font-sans uppercase tracking-wider">
                     {target.area}
                   </span>
-                  {target.deadline && (
-                    <span className="text-[10px] text-[#8A8578] font-sans ml-auto">
-                      Due: {target.deadline}
-                    </span>
-                  )}
                 </div>
                 <h4 className="text-[#F5F0E8] font-sans font-medium text-sm mb-1">
                   {target.target}
                 </h4>
                 <p className="text-xs text-[#8A8578] font-sans">
-                  Measure: {target.measure}
+                  Measure: {target.measurement}
                 </p>
               </div>
             ))}
@@ -222,17 +245,11 @@ export default function BlueprintDocument({
                 </div>
                 <div>
                   <p className="text-sm text-[#F5F0E8] font-sans font-medium">
-                    {item.activity}
+                    {item.practice}
                   </p>
-                  {(item.time_of_day || item.duration_minutes) && (
+                  {item.time && (
                     <p className="text-xs text-[#8A8578] font-sans mt-0.5">
-                      {item.time_of_day && <span>{item.time_of_day}</span>}
-                      {item.time_of_day && item.duration_minutes && (
-                        <span> &middot; </span>
-                      )}
-                      {item.duration_minutes && (
-                        <span>{item.duration_minutes} min</span>
-                      )}
+                      {item.time}
                     </p>
                   )}
                 </div>
@@ -243,41 +260,75 @@ export default function BlueprintDocument({
       )}
 
       {/* Faith Commitments */}
-      {faith_commitments && (
+      {faithComm && Array.isArray(faithComm) && faithComm.length > 0 && (
         <BlueprintSection title="Faith Commitments" icon={<FaithIcon />}>
-          <p className="text-[#F5F0E8] font-sans leading-relaxed text-sm whitespace-pre-line">
-            {faith_commitments}
-          </p>
+          <ul className="space-y-3">
+            {faithComm.map((f, i) => (
+              <li key={i} className="flex items-start gap-3">
+                <span className="text-[#C9A84C] mt-0.5 flex-shrink-0">&bull;</span>
+                <div>
+                  <span className="text-[#F5F0E8] font-sans text-sm">{f.practice}</span>
+                  <span className="text-[#8A8578] font-sans text-xs ml-2">({f.frequency})</span>
+                </div>
+              </li>
+            ))}
+          </ul>
         </BlueprintSection>
       )}
 
       {/* Health Targets */}
-      {health_targets && (
+      {healthTgt && Array.isArray(healthTgt) && healthTgt.length > 0 && (
         <BlueprintSection title="Health Targets" icon={<HealthIcon />}>
-          <p className="text-[#F5F0E8] font-sans leading-relaxed text-sm whitespace-pre-line">
-            {health_targets}
-          </p>
+          <ul className="space-y-3">
+            {healthTgt.map((h, i) => (
+              <li key={i} className="flex items-start gap-3">
+                <span className="text-[#C9A84C] mt-0.5 flex-shrink-0">&bull;</span>
+                <div>
+                  <span className="text-[#F5F0E8] font-sans text-sm">{h.target}</span>
+                  <p className="text-[#8A8578] font-sans text-xs mt-0.5">
+                    Measure: {h.measurement}
+                  </p>
+                </div>
+              </li>
+            ))}
+          </ul>
         </BlueprintSection>
       )}
 
       {/* Financial Targets */}
-      {financial_targets && (
+      {financialTgt && Array.isArray(financialTgt) && financialTgt.length > 0 && (
         <BlueprintSection title="Financial Targets" icon={<FinanceIcon />}>
-          <p className="text-[#F5F0E8] font-sans leading-relaxed text-sm whitespace-pre-line">
-            {financial_targets}
-          </p>
+          <ul className="space-y-3">
+            {financialTgt.map((f, i) => (
+              <li key={i} className="flex items-start gap-3">
+                <span className="text-[#C9A84C] mt-0.5 flex-shrink-0">&bull;</span>
+                <div>
+                  <span className="text-[#F5F0E8] font-sans text-sm">{f.target}</span>
+                  <span className="text-[#8A8578] font-sans text-xs ml-2">({f.timeline})</span>
+                </div>
+              </li>
+            ))}
+          </ul>
         </BlueprintSection>
       )}
 
       {/* Relationship Commitments */}
-      {relationship_commitments && (
+      {relComm && Array.isArray(relComm) && relComm.length > 0 && (
         <BlueprintSection
           title="Relationship Commitments"
           icon={<RelationshipIcon />}
         >
-          <p className="text-[#F5F0E8] font-sans leading-relaxed text-sm whitespace-pre-line">
-            {relationship_commitments}
-          </p>
+          <ul className="space-y-3">
+            {relComm.map((r, i) => (
+              <li key={i} className="flex items-start gap-3">
+                <span className="text-[#C9A84C] mt-0.5 flex-shrink-0">&bull;</span>
+                <div>
+                  <span className="text-[#F5F0E8] font-sans text-sm font-medium">{r.relationship}:</span>{' '}
+                  <span className="text-[#8A8578] font-sans text-sm">{r.commitment}</span>
+                </div>
+              </li>
+            ))}
+          </ul>
         </BlueprintSection>
       )}
     </div>

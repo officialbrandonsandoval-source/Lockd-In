@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { Blueprint } from "@/lib/supabase/types";
 import { useAuth } from "./useAuth";
@@ -14,7 +14,7 @@ export interface UseBlueprintReturn {
 }
 
 export function useBlueprint(): UseBlueprintReturn {
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
   const { user } = useAuth();
 
   const [blueprint, setBlueprint] = useState<Blueprint | null>(null);

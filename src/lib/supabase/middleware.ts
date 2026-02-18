@@ -33,7 +33,45 @@ export async function updateSession(request: NextRequest) {
   // supabase.auth.getUser(). A simple mistake here can make it very
   // hard to debug session issues in production.
 
-  await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  // Protected routes: redirect unauthenticated users to homepage
+  const pathname = request.nextUrl.pathname;
+  const protectedPaths = [
+    '/dashboard',
+    '/blueprint',
+    '/checkin',
+    '/pulse',
+    '/streaks',
+    '/share',
+    '/settings',
+    '/invite',
+  ];
+
+  const isProtectedRoute = protectedPaths.some(
+    (path) => pathname === path || pathname.startsWith(path + '/')
+  );
+
+  if (isProtectedRoute && !user) {
+    const url = request.nextUrl.clone();
+    url.pathname = '/';
+    return NextResponse.redirect(url);
+  }
+
+  // Redirect authenticated users away from onboarding pages they've already completed
+  // (welcome page should redirect to dashboard if already authenticated)
+  const publicOnlyPaths = ['/welcome'];
+  const isPublicOnlyRoute = publicOnlyPaths.some(
+    (path) => pathname === path || pathname.startsWith(path + '/')
+  );
+
+  if (isPublicOnlyRoute && user) {
+    const url = request.nextUrl.clone();
+    url.pathname = '/dashboard';
+    return NextResponse.redirect(url);
+  }
 
   return supabaseResponse;
 }
