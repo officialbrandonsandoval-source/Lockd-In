@@ -92,7 +92,7 @@ export default function QuickActions({
           </div>
         </motion.div>
       ) : (
-        <Link href="/app/checkin/morning">
+        <Link href="/checkin/morning">
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
@@ -153,7 +153,7 @@ export default function QuickActions({
           </div>
         </motion.div>
       ) : (
-        <Link href="/app/checkin/evening">
+        <Link href="/checkin/evening">
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}

@@ -45,7 +45,7 @@ export default function TodayCard({ priorities, onToggle }: TodayCardProps) {
           You haven&apos;t set your priorities for today yet.
         </p>
         <Link
-          href="/app/checkin/morning"
+          href="/checkin/morning"
           className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#C9A84C] text-[#0A0A0A] font-semibold text-sm rounded-xl hover:bg-[#C9A84C]/90 transition-colors"
         >
           <svg

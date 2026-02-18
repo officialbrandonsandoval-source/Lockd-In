@@ -132,7 +132,7 @@ export default function BlueprintClient() {
             you&apos;re heading. Complete the assessment to generate yours.
           </p>
           <Link
-            href="/app/dashboard"
+            href="/dashboard"
             className="inline-flex items-center gap-2 px-6 py-3 bg-[#C9A84C] text-[#0A0A0A] font-semibold text-sm rounded-xl hover:bg-[#C9A84C]/90 transition-colors"
           >
             <svg
@@ -165,7 +165,7 @@ export default function BlueprintClient() {
         {/* Page header */}
         <div className="mb-8">
           <Link
-            href="/app/dashboard"
+            href="/dashboard"
             className="inline-flex items-center gap-1.5 text-sm text-[#8A8578] hover:text-[#C9A84C] transition-colors font-sans mb-4"
           >
             <svg

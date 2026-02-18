@@ -601,7 +601,7 @@ export default function BlueprintRevealPage() {
                 size="lg"
                 fullWidth
                 className="max-w-sm text-base tracking-wide"
-                onClick={() => router.push("/app/dashboard")}
+                onClick={() => router.push("/dashboard")}
               >
                 Save &amp; Lock In
               </Button>
