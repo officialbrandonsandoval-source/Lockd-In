@@ -26,7 +26,7 @@ export default function EveningCheckinPage() {
       } = await supabase.auth.getUser();
 
       if (!user) {
-        router.push('/login');
+        router.push('/');
         return;
       }
 

@@ -62,6 +62,6 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  // No code or exchange failed — send to login with error
-  return NextResponse.redirect(new URL('/login?error=auth_callback_error', baseUrl));
+  // No code or exchange failed — send to landing page
+  return NextResponse.redirect(new URL('/', baseUrl));
 }

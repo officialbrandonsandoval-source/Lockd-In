@@ -234,7 +234,7 @@ export default function SettingsPage() {
         } = await supabase.auth.getUser();
 
         if (!user) {
-          router.push('/login');
+          router.push('/');
           return;
         }
 
@@ -327,7 +327,7 @@ export default function SettingsPage() {
     setSigningOut(true);
     try {
       await supabase.auth.signOut();
-      router.push('/login');
+      router.push('/');
     } catch {
       setToast({ message: 'Failed to sign out.', type: 'error' });
       setSigningOut(false);
