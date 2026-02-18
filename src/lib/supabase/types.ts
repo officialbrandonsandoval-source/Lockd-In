@@ -178,41 +178,156 @@ export interface SmsLog {
 // Insert / Update helpers
 // ---------------------------------------------------------------------------
 
-export type ProfileInsert = Omit<Profile, "created_at" | "updated_at"> &
-  Partial<Pick<Profile, "created_at" | "updated_at">>;
-export type ProfileUpdate = Partial<Omit<Profile, "id">>;
+// Profile: id is required, nullable fields optional on insert, timestamps auto
+export type ProfileInsert = {
+  id: string;
+  full_name: string;
+  email: string;
+  phone?: string | null;
+  date_of_birth?: string | null;
+  city?: string | null;
+  state?: string | null;
+  faith_tradition?: string | null;
+  marital_status?: string | null;
+  has_children?: boolean | null;
+  number_of_children?: number | null;
+  children_details?: ChildDetail[] | null;
+  occupation?: string | null;
+  entrepreneur?: boolean | null;
+  onboarding_completed?: boolean;
+  sms_opt_in?: boolean;
+  sms_morning_time?: string | null;
+  sms_evening_time?: string | null;
+  timezone?: string | null;
+  avatar_url?: string | null;
+  created_at?: string;
+  updated_at?: string;
+};
+export type ProfileUpdate = Partial<Omit<ProfileInsert, "id">>;
 
-export type AssessmentResponseInsert = Omit<AssessmentResponse, "id" | "created_at"> &
-  Partial<Pick<AssessmentResponse, "id" | "created_at">>;
-export type AssessmentResponseUpdate = Partial<Omit<AssessmentResponse, "id">>;
+// AssessmentResponse: id and created_at auto-generated
+export type AssessmentResponseInsert = {
+  user_id: string;
+  section: string;
+  question_key: string;
+  question_text: string;
+  response_text: string;
+  response_metadata?: Record<string, unknown> | null;
+  id?: string;
+  created_at?: string;
+};
+export type AssessmentResponseUpdate = Partial<Omit<AssessmentResponseInsert, "id">>;
 
-export type BlueprintInsert = Omit<Blueprint, "id" | "generated_at" | "updated_at"> &
-  Partial<Pick<Blueprint, "id" | "generated_at" | "updated_at">>;
-export type BlueprintUpdate = Partial<Omit<Blueprint, "id">>;
+// Blueprint: id, generated_at, updated_at auto-generated
+export type BlueprintInsert = {
+  user_id: string;
+  version: number;
+  status: string;
+  identity_statement?: string | null;
+  purpose_statement?: string | null;
+  family_vision?: string | null;
+  core_values?: CoreValue[] | null;
+  ninety_day_targets?: NinetyDayTarget[] | null;
+  daily_non_negotiables?: DailyNonNegotiable[] | null;
+  faith_commitments?: string | null;
+  health_targets?: string | null;
+  financial_targets?: string | null;
+  relationship_commitments?: string | null;
+  full_blueprint_markdown?: string | null;
+  ai_analysis?: Record<string, unknown> | null;
+  id?: string;
+  generated_at?: string;
+  updated_at?: string;
+};
+export type BlueprintUpdate = Partial<Omit<BlueprintInsert, "id">>;
 
-export type DailyCheckinInsert = Omit<DailyCheckin, "id" | "created_at"> &
-  Partial<Pick<DailyCheckin, "id" | "created_at">>;
-export type DailyCheckinUpdate = Partial<Omit<DailyCheckin, "id">>;
+// DailyCheckin: id and created_at auto-generated; most fields nullable
+export type DailyCheckinInsert = {
+  user_id: string;
+  checkin_date: string;
+  morning_priorities?: PriorityItem[] | null;
+  morning_scripture?: string | null;
+  morning_intention?: string | null;
+  morning_completed_at?: string | null;
+  evening_wins?: string[] | null;
+  evening_struggles?: string[] | null;
+  evening_gratitude?: string[] | null;
+  evening_tomorrow_focus?: string | null;
+  priorities_completed?: number | null;
+  day_rating?: number | null;
+  evening_completed_at?: string | null;
+  ai_morning_message?: string | null;
+  ai_evening_message?: string | null;
+  id?: string;
+  created_at?: string;
+};
+export type DailyCheckinUpdate = Partial<Omit<DailyCheckinInsert, "id">>;
 
-export type StreakInsert = Omit<Streak, "id" | "updated_at"> &
-  Partial<Pick<Streak, "id" | "updated_at">>;
-export type StreakUpdate = Partial<Omit<Streak, "id">>;
+// Streak: id and updated_at auto-generated
+export type StreakInsert = {
+  user_id: string;
+  current_streak?: number;
+  longest_streak?: number;
+  total_checkins?: number;
+  last_checkin_date?: string | null;
+  streak_started_at?: string | null;
+  id?: string;
+  updated_at?: string;
+};
+export type StreakUpdate = Partial<Omit<StreakInsert, "id">>;
 
-export type WeeklyPulseInsert = Omit<WeeklyPulse, "id" | "generated_at"> &
-  Partial<Pick<WeeklyPulse, "id" | "generated_at">>;
-export type WeeklyPulseUpdate = Partial<Omit<WeeklyPulse, "id">>;
+// WeeklyPulse: id and generated_at auto-generated
+export type WeeklyPulseInsert = {
+  user_id: string;
+  week_start: string;
+  week_end: string;
+  alignment_score?: number | null;
+  wins_summary?: string | null;
+  growth_areas?: string | null;
+  pattern_insights?: string | null;
+  next_week_focus?: string | null;
+  scripture_encouragement?: string | null;
+  full_pulse_markdown?: string | null;
+  id?: string;
+  generated_at?: string;
+};
+export type WeeklyPulseUpdate = Partial<Omit<WeeklyPulseInsert, "id">>;
 
-export type ShareCardInsert = Omit<ShareCard, "id" | "created_at" | "views"> &
-  Partial<Pick<ShareCard, "id" | "created_at" | "views">>;
-export type ShareCardUpdate = Partial<Omit<ShareCard, "id">>;
+// ShareCard: id, created_at, views auto-generated
+export type ShareCardInsert = {
+  user_id: string;
+  card_type: string;
+  card_data: Record<string, unknown>;
+  share_code: string;
+  share_url?: string | null;
+  views?: number;
+  id?: string;
+  created_at?: string;
+};
+export type ShareCardUpdate = Partial<Omit<ShareCardInsert, "id">>;
 
-export type ReferralInsert = Omit<Referral, "id" | "created_at"> &
-  Partial<Pick<Referral, "id" | "created_at">>;
-export type ReferralUpdate = Partial<Omit<Referral, "id">>;
+// Referral: id and created_at auto-generated
+export type ReferralInsert = {
+  referrer_id: string;
+  share_code: string;
+  referred_id?: string | null;
+  id?: string;
+  created_at?: string;
+};
+export type ReferralUpdate = Partial<Omit<ReferralInsert, "id">>;
 
-export type SmsLogInsert = Omit<SmsLog, "id" | "created_at"> &
-  Partial<Pick<SmsLog, "id" | "created_at">>;
-export type SmsLogUpdate = Partial<Omit<SmsLog, "id">>;
+// SmsLog: id and created_at auto-generated
+export type SmsLogInsert = {
+  user_id: string;
+  direction: string;
+  message_type: string;
+  message_body: string;
+  status: string;
+  twilio_sid?: string | null;
+  id?: string;
+  created_at?: string;
+};
+export type SmsLogUpdate = Partial<Omit<SmsLogInsert, "id">>;
 
 // ---------------------------------------------------------------------------
 // Database type (mirrors Supabase generated schema shape)
@@ -225,46 +340,55 @@ export interface Database {
         Row: Profile;
         Insert: ProfileInsert;
         Update: ProfileUpdate;
+        Relationships: [];
       };
       assessment_responses: {
         Row: AssessmentResponse;
         Insert: AssessmentResponseInsert;
         Update: AssessmentResponseUpdate;
+        Relationships: [];
       };
       blueprints: {
         Row: Blueprint;
         Insert: BlueprintInsert;
         Update: BlueprintUpdate;
+        Relationships: [];
       };
       daily_checkins: {
         Row: DailyCheckin;
         Insert: DailyCheckinInsert;
         Update: DailyCheckinUpdate;
+        Relationships: [];
       };
       streaks: {
         Row: Streak;
         Insert: StreakInsert;
         Update: StreakUpdate;
+        Relationships: [];
       };
       weekly_pulses: {
         Row: WeeklyPulse;
         Insert: WeeklyPulseInsert;
         Update: WeeklyPulseUpdate;
+        Relationships: [];
       };
       share_cards: {
         Row: ShareCard;
         Insert: ShareCardInsert;
         Update: ShareCardUpdate;
+        Relationships: [];
       };
       referrals: {
         Row: Referral;
         Insert: ReferralInsert;
         Update: ReferralUpdate;
+        Relationships: [];
       };
       sms_logs: {
         Row: SmsLog;
         Insert: SmsLogInsert;
         Update: SmsLogUpdate;
+        Relationships: [];
       };
     };
     Views: {
