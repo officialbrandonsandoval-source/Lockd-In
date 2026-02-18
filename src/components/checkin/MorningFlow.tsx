@@ -5,21 +5,30 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import PriorityInput from './PriorityInput';
 
-interface MorningFlowProps {
-  userName: string;
-}
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
 
-interface MorningAIMessage {
+interface MorningMessage {
   greeting?: string;
   identity_reminder?: string;
   streak_acknowledgment?: string;
   scripture_or_wisdom?: string;
   todays_focus?: string;
-  commitments?: Array<{ commitment: string; linked_target: string }>;
+  commitments?: Array<{
+    commitment: string;
+    linked_target: string;
+  }>;
   closing_charge?: string;
 }
 
-const TOTAL_STEPS = 3;
+interface MorningFlowProps {
+  userName: string;
+}
+
+// ---------------------------------------------------------------------------
+// Animation variants
+// ---------------------------------------------------------------------------
 
 const stepVariants = {
   enter: (direction: number) => ({
@@ -36,19 +45,27 @@ const stepVariants = {
   }),
 };
 
+const TOTAL_STEPS = 3;
+
+// ---------------------------------------------------------------------------
+// Component
+// ---------------------------------------------------------------------------
+
 export default function MorningFlow({ userName }: MorningFlowProps) {
   const router = useRouter();
   const [step, setStep] = useState(1);
   const [direction, setDirection] = useState(1);
-  const [priorities, setPriorities] = useState(['', '', '']);
-  const [intention, setIntention] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingAI, setIsLoadingAI] = useState(false);
-  const [aiMessage, setAiMessage] = useState<MorningAIMessage | null>(null);
-  const [aiRawText, setAiRawText] = useState('');
-  const [error, setError] = useState('');
   const [showSuccess, setShowSuccess] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
+  // Form state
+  const [priorities, setPriorities] = useState(['', '', '']);
+  const [intention, setIntention] = useState('');
+  const [morningMessage, setMorningMessage] = useState<MorningMessage | null>(null);
+
+  // Priority helpers
   const updatePriority = useCallback((index: number, value: string) => {
     setPriorities((prev) => {
       const next = [...prev];
@@ -57,96 +74,93 @@ export default function MorningFlow({ userName }: MorningFlowProps) {
     });
   }, []);
 
-  const canProceed = (): boolean => {
-    if (step === 1) {
-      return priorities.every((p) => p.trim().length > 0);
-    }
-    if (step === 2) {
-      return intention.trim().length > 0;
-    }
+  // Step validation
+  const canAdvance = useCallback((): boolean => {
+    if (step === 1) return priorities.every((p) => p.trim().length > 0);
+    if (step === 2) return intention.trim().length > 0;
     return true;
-  };
+  }, [step, priorities, intention]);
 
-  const handleNext = async () => {
-    setError('');
+  // Navigation
+  const goNext = useCallback(async () => {
+    if (!canAdvance()) return;
+    setError(null);
 
     if (step === 2) {
-      // Submit the check-in and fetch AI message
+      // Submit check-in, then fetch AI message
       setIsSubmitting(true);
       try {
         const checkinRes = await fetch('/api/checkin/morning', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ priorities, intention }),
+          body: JSON.stringify({
+            priorities: priorities.map((p) => p.trim()),
+            intention: intention.trim(),
+          }),
         });
 
         if (!checkinRes.ok) {
           const data = await checkinRes.json();
-          setError(data.error || 'Failed to save check-in.');
-          setIsSubmitting(false);
-          return;
+          throw new Error(data.error || 'Failed to save check-in.');
         }
 
         setIsSubmitting(false);
         setDirection(1);
         setStep(3);
 
-        // Now fetch AI morning message
+        // Fetch AI message
         setIsLoadingAI(true);
         try {
-          const aiRes = await fetch('/api/agent/morning', {
+          const agentRes = await fetch('/api/agent/morning', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
           });
 
-          if (aiRes.ok) {
-            const aiData = await aiRes.json();
-            if (typeof aiData.message === 'object') {
-              setAiMessage(aiData.message);
-            } else {
-              setAiRawText(
-                typeof aiData.message === 'string'
-                  ? aiData.message
-                  : JSON.stringify(aiData.message)
-              );
-            }
+          if (agentRes.ok) {
+            const agentData = await agentRes.json();
+            setMorningMessage(
+              typeof agentData.message === 'string'
+                ? JSON.parse(agentData.message)
+                : agentData.message
+            );
           }
         } catch {
-          // AI message is optional; do not block the flow
-          setAiRawText(
-            'Your morning word is being prepared. Check back on your dashboard.'
-          );
+          // AI message is optional; failing gracefully
+          console.warn('[MorningFlow] Could not load AI message.');
         } finally {
           setIsLoadingAI(false);
         }
-      } catch {
-        setError('Something went wrong. Please try again.');
+      } catch (err) {
         setIsSubmitting(false);
+        setError(
+          err instanceof Error ? err.message : 'Something went wrong.'
+        );
       }
       return;
     }
 
-    if (step < TOTAL_STEPS) {
-      setDirection(1);
-      setStep((s) => s + 1);
+    if (step === 3) {
+      // Complete — show success then redirect
+      setShowSuccess(true);
+      setTimeout(() => {
+        router.push('/dashboard');
+      }, 2200);
+      return;
     }
-  };
 
-  const handleBack = () => {
-    if (step > 1) {
-      setDirection(-1);
-      setStep((s) => s - 1);
-    }
-  };
+    setDirection(1);
+    setStep((s) => Math.min(s + 1, TOTAL_STEPS));
+  }, [step, canAdvance, priorities, intention, router]);
 
-  const handleFinish = () => {
-    setShowSuccess(true);
-    setTimeout(() => {
-      router.push('/dashboard');
-    }, 2000);
-  };
+  const goBack = useCallback(() => {
+    if (step <= 1) return;
+    setError(null);
+    setDirection(-1);
+    setStep((s) => s - 1);
+  }, [step]);
 
-  // Success animation overlay
+  // ---------------------------------------------------------------------------
+  // Success overlay
+  // ---------------------------------------------------------------------------
   if (showSuccess) {
     return (
       <motion.div
@@ -154,20 +168,31 @@ export default function MorningFlow({ userName }: MorningFlowProps) {
         animate={{ opacity: 1 }}
         className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#0A0A0A]"
       >
+        {/* Gold burst */}
+        <motion.div
+          className="w-24 h-24 rounded-full"
+          style={{
+            background:
+              'radial-gradient(circle, rgba(201,168,76,0.3) 0%, rgba(201,168,76,0) 70%)',
+          }}
+          animate={{
+            scale: [1, 2, 1.5],
+            opacity: [0.5, 1, 0.7],
+          }}
+          transition={{ duration: 1.2, ease: 'easeOut' }}
+        />
         <motion.div
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
-          transition={{ type: 'spring', stiffness: 200, damping: 15 }}
-          className="w-20 h-20 rounded-full bg-[#2D5A27]/20 flex items-center justify-center mb-6"
+          transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
+          className="absolute"
         >
-          <motion.svg
-            initial={{ pathLength: 0 }}
-            animate={{ pathLength: 1 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            width="40"
-            height="40"
+          <svg
+            width="64"
+            height="64"
             viewBox="0 0 24 24"
             fill="none"
+            xmlns="http://www.w3.org/2000/svg"
           >
             <motion.path
               d="M5 13l4 4L19 7"
@@ -177,42 +202,47 @@ export default function MorningFlow({ userName }: MorningFlowProps) {
               strokeLinejoin="round"
               initial={{ pathLength: 0 }}
               animate={{ pathLength: 1 }}
-              transition={{ duration: 0.6, delay: 0.3 }}
+              transition={{ delay: 0.4, duration: 0.5, ease: 'easeOut' }}
             />
-          </motion.svg>
+          </svg>
         </motion.div>
         <motion.p
-          initial={{ opacity: 0, y: 10 }}
+          initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-          className="text-[#F5F0E8] font-display text-xl"
+          transition={{ delay: 0.8 }}
+          className="mt-16 text-[#F5F0E8] font-display text-xl"
         >
           You are locked in.
         </motion.p>
         <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.8 }}
-          className="text-[#8A8578] font-sans text-sm mt-2"
+          transition={{ delay: 1.2 }}
+          className="mt-2 text-[#8A8578] font-sans text-sm"
         >
-          Go build something today, {userName}.
+          Go build your legacy today.
         </motion.p>
       </motion.div>
     );
   }
 
+  // ---------------------------------------------------------------------------
+  // Render
+  // ---------------------------------------------------------------------------
   return (
-    <div className="min-h-screen bg-[#0A0A0A] flex flex-col">
+    <div className="min-h-screen flex flex-col bg-[#0A0A0A]">
       {/* Progress Dots */}
       <div className="flex items-center justify-center gap-3 pt-8 pb-4">
-        {Array.from({ length: TOTAL_STEPS }).map((_, i) => (
+        {Array.from({ length: TOTAL_STEPS }, (_, i) => (
           <motion.div
             key={i}
             className="w-2.5 h-2.5 rounded-full"
             animate={{
               backgroundColor:
-                i + 1 <= step ? '#C9A84C' : '#2A2A2A',
-              scale: i + 1 === step ? 1.3 : 1,
+                i + 1 <= step
+                  ? '#C9A84C'
+                  : '#2A2A2A',
+              scale: i + 1 === step ? 1.25 : 1,
             }}
             transition={{ duration: 0.3 }}
           />
@@ -222,6 +252,7 @@ export default function MorningFlow({ userName }: MorningFlowProps) {
       {/* Step Content */}
       <div className="flex-1 flex items-center justify-center px-5">
         <AnimatePresence mode="wait" custom={direction}>
+          {/* Step 1: Priorities */}
           {step === 1 && (
             <motion.div
               key="step-1"
@@ -231,26 +262,36 @@ export default function MorningFlow({ userName }: MorningFlowProps) {
               animate="center"
               exit="exit"
               transition={{ duration: 0.35, ease: 'easeInOut' }}
-              className="w-full max-w-md"
+              className="w-full max-w-lg"
             >
-              <h2 className="font-display text-2xl text-[#F5F0E8] mb-2">
+              <motion.h2
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                className="font-display text-2xl text-[#F5F0E8] mb-2"
+              >
                 Good morning, {userName}.
-              </h2>
-              <p className="text-[#8A8578] font-sans text-sm mb-8">
+              </motion.h2>
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.2 }}
+                className="text-[#8A8578] font-sans text-sm mb-8"
+              >
                 What are your top 3 priorities today?
-              </p>
+              </motion.p>
 
               <div className="flex flex-col gap-4">
-                {priorities.map((value, idx) => (
+                {priorities.map((val, i) => (
                   <PriorityInput
-                    key={idx}
-                    index={idx}
-                    value={value}
-                    onChange={(val) => updatePriority(idx, val)}
+                    key={i}
+                    index={i}
+                    value={val}
+                    onChange={(v) => updatePriority(i, v)}
                     placeholder={
-                      idx === 0
-                        ? 'Most important thing today...'
-                        : idx === 1
+                      i === 0
+                        ? 'Most important priority...'
+                        : i === 1
                           ? 'Second priority...'
                           : 'Third priority...'
                     }
@@ -260,6 +301,7 @@ export default function MorningFlow({ userName }: MorningFlowProps) {
             </motion.div>
           )}
 
+          {/* Step 2: Intention */}
           {step === 2 && (
             <motion.div
               key="step-2"
@@ -269,36 +311,50 @@ export default function MorningFlow({ userName }: MorningFlowProps) {
               animate="center"
               exit="exit"
               transition={{ duration: 0.35, ease: 'easeInOut' }}
-              className="w-full max-w-md"
+              className="w-full max-w-lg"
             >
-              <h2 className="font-display text-2xl text-[#F5F0E8] mb-2">
+              <motion.h2
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                className="font-display text-2xl text-[#F5F0E8] mb-2"
+              >
                 Set your intention for today.
-              </h2>
-              <p className="text-[#8A8578] font-sans text-sm mb-8">
-                Who do you want to be today? What mindset are you carrying?
-              </p>
+              </motion.h2>
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.2 }}
+                className="text-[#8A8578] font-sans text-sm mb-8"
+              >
+                One sentence that anchors your day.
+              </motion.p>
 
-              <textarea
+              <motion.textarea
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.15 }}
                 value={intention}
                 onChange={(e) => setIntention(e.target.value)}
                 placeholder="Today I will..."
-                rows={5}
+                rows={4}
+                maxLength={500}
                 className="
                   w-full bg-[#141414] text-[#F5F0E8] font-sans
                   border border-[#2A2A2A] rounded-xl
-                  px-4 py-3 text-sm
+                  px-4 py-3 text-sm resize-none
                   placeholder:text-[#8A8578]/50
                   focus:outline-none focus:border-[#C9A84C] focus:ring-1 focus:ring-[#C9A84C]/30
-                  transition-colors duration-200 resize-none
+                  transition-colors duration-200
                 "
-                maxLength={500}
               />
-              <p className="text-right text-xs text-[#8A8578] mt-1 font-sans">
+              <p className="text-right text-xs text-[#8A8578] mt-1.5 font-sans">
                 {intention.length} / 500
               </p>
             </motion.div>
           )}
 
+          {/* Step 3: AI Morning Message */}
           {step === 3 && (
             <motion.div
               key="step-3"
@@ -308,179 +364,215 @@ export default function MorningFlow({ userName }: MorningFlowProps) {
               animate="center"
               exit="exit"
               transition={{ duration: 0.35, ease: 'easeInOut' }}
-              className="w-full max-w-md"
+              className="w-full max-w-lg"
             >
-              <h2 className="font-display text-2xl text-[#F5F0E8] mb-2">
+              <motion.h2
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                className="font-display text-2xl text-[#F5F0E8] mb-2"
+              >
                 Here&apos;s your morning word.
-              </h2>
-              <p className="text-[#8A8578] font-sans text-sm mb-8">
-                A word crafted for you, for today.
-              </p>
+              </motion.h2>
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.2 }}
+                className="text-[#8A8578] font-sans text-sm mb-6"
+              >
+                A message crafted just for you today.
+              </motion.p>
 
               {isLoadingAI ? (
-                <div className="flex flex-col items-center gap-4 py-12">
-                  <motion.div
-                    className="w-10 h-10 rounded-full border-2 border-[#2A2A2A]"
-                    style={{ borderTopColor: '#C9A84C' }}
-                    animate={{ rotate: 360 }}
-                    transition={{
-                      duration: 1,
-                      repeat: Infinity,
-                      ease: 'linear',
-                    }}
-                  />
-                  <p className="text-[#8A8578] font-sans text-sm">
-                    Preparing your morning word...
+                <div className="space-y-4">
+                  {/* Loading skeleton */}
+                  {[1, 2, 3].map((i) => (
+                    <motion.div
+                      key={i}
+                      className="h-4 rounded bg-[#1A1A1A] shimmer-bg"
+                      style={{ width: `${100 - i * 15}%` }}
+                      animate={{ opacity: [0.4, 0.7, 0.4] }}
+                      transition={{
+                        duration: 1.5,
+                        repeat: Infinity,
+                        delay: i * 0.2,
+                      }}
+                    />
+                  ))}
+                  <p className="text-[#8A8578] text-xs font-sans mt-4">
+                    Preparing your morning message...
                   </p>
                 </div>
-              ) : aiMessage ? (
+              ) : morningMessage ? (
                 <motion.div
                   initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5 }}
-                  className="space-y-5"
+                  transition={{ delay: 0.1 }}
+                  className="bg-[#1A1A1A] border border-[#2A2A2A] rounded-2xl p-6 space-y-5"
                 >
-                  {aiMessage.greeting && (
-                    <div className="bg-[#1A1A1A] border border-[#2A2A2A] rounded-2xl p-5">
-                      <p className="text-[#F5F0E8] font-sans text-sm leading-relaxed">
-                        {aiMessage.greeting}
-                      </p>
-                    </div>
-                  )}
-
-                  {aiMessage.identity_reminder && (
-                    <div className="bg-[#1A1A1A] border border-[#C9A84C]/20 rounded-2xl p-5">
-                      <p className="text-xs text-[#C9A84C] font-sans font-semibold uppercase tracking-wider mb-2">
-                        Identity
-                      </p>
-                      <p className="text-[#E8E0D0] font-display text-base italic leading-relaxed">
-                        {aiMessage.identity_reminder}
-                      </p>
-                    </div>
-                  )}
-
-                  {aiMessage.scripture_or_wisdom && (
-                    <div className="bg-[#1A1A1A] border border-[#2A2A2A] rounded-2xl p-5">
-                      <p className="text-xs text-[#C9A84C] font-sans font-semibold uppercase tracking-wider mb-2">
-                        Scripture
-                      </p>
-                      <p className="text-[#F5F0E8] font-sans text-sm leading-relaxed">
-                        {aiMessage.scripture_or_wisdom}
-                      </p>
-                    </div>
-                  )}
-
-                  {aiMessage.streak_acknowledgment && (
-                    <p className="text-[#8A8578] font-sans text-sm leading-relaxed">
-                      {aiMessage.streak_acknowledgment}
+                  {/* Greeting */}
+                  {morningMessage.greeting && (
+                    <p className="text-[#F5F0E8] font-sans text-sm leading-relaxed">
+                      {morningMessage.greeting}
                     </p>
                   )}
 
-                  {aiMessage.closing_charge && (
+                  {/* Identity Reminder */}
+                  {morningMessage.identity_reminder && (
+                    <div className="border-l-2 border-[#C9A84C]/40 pl-4">
+                      <p className="text-[#E8E0D0] font-display text-sm italic leading-relaxed">
+                        {morningMessage.identity_reminder}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Streak Acknowledgment */}
+                  {morningMessage.streak_acknowledgment && (
+                    <p className="text-[#8A8578] font-sans text-sm">
+                      {morningMessage.streak_acknowledgment}
+                    </p>
+                  )}
+
+                  {/* Scripture */}
+                  {morningMessage.scripture_or_wisdom && (
+                    <div className="bg-[#141414] rounded-xl p-4 border border-[#2A2A2A]">
+                      <p className="text-[#C9A84C] font-display text-sm leading-relaxed">
+                        {morningMessage.scripture_or_wisdom}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Today's Focus */}
+                  {morningMessage.todays_focus && (
+                    <p className="text-[#F5F0E8] font-sans text-sm">
+                      {morningMessage.todays_focus}
+                    </p>
+                  )}
+
+                  {/* Commitments */}
+                  {morningMessage.commitments &&
+                    morningMessage.commitments.length > 0 && (
+                      <div className="space-y-2">
+                        <p className="text-[#8A8578] text-xs font-sans uppercase tracking-wider">
+                          Today&apos;s Commitments
+                        </p>
+                        {morningMessage.commitments.map((c, i) => (
+                          <div
+                            key={i}
+                            className="flex items-start gap-2 text-sm"
+                          >
+                            <span className="text-[#C9A84C] mt-0.5">
+                              &bull;
+                            </span>
+                            <div>
+                              <p className="text-[#F5F0E8] font-sans">
+                                {c.commitment}
+                              </p>
+                              <p className="text-[#8A8578] text-xs font-sans">
+                                {c.linked_target}
+                              </p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                  {/* Closing Charge */}
+                  {morningMessage.closing_charge && (
                     <div className="pt-2 border-t border-[#2A2A2A]">
-                      <p className="text-[#C9A84C] font-display text-base leading-relaxed">
-                        {aiMessage.closing_charge}
+                      <p className="text-[#E8E0D0] font-display text-sm font-semibold">
+                        {morningMessage.closing_charge}
                       </p>
                     </div>
                   )}
                 </motion.div>
-              ) : aiRawText ? (
-                <motion.div
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="bg-[#1A1A1A] border border-[#2A2A2A] rounded-2xl p-5"
-                >
-                  <p className="text-[#F5F0E8] font-sans text-sm leading-relaxed whitespace-pre-wrap">
-                    {aiRawText}
+              ) : (
+                <div className="bg-[#1A1A1A] border border-[#2A2A2A] rounded-2xl p-6">
+                  <p className="text-[#8A8578] font-sans text-sm">
+                    Your morning check-in has been saved. Go make today count.
                   </p>
-                </motion.div>
-              ) : null}
+                </div>
+              )}
             </motion.div>
           )}
         </AnimatePresence>
       </div>
 
-      {/* Error Message */}
+      {/* Error */}
       {error && (
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           className="px-5 pb-2"
         >
-          <p className="text-center text-sm text-red-400 font-sans">{error}</p>
+          <p className="text-center text-sm text-red-400 font-sans">
+            {error}
+          </p>
         </motion.div>
       )}
 
       {/* Navigation */}
-      <div className="px-5 pb-8 pt-4">
-        <div className="flex items-center gap-3 max-w-md mx-auto">
-          {step > 1 && step < 3 && (
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.97 }}
-              onClick={handleBack}
-              className="
-                flex-1 py-3.5 rounded-xl font-sans text-sm font-medium
-                bg-transparent border border-[#2A2A2A] text-[#8A8578]
-                hover:border-[#C9A84C]/30 hover:text-[#F5F0E8]
-                transition-colors duration-200
-              "
-            >
-              Back
-            </motion.button>
-          )}
+      <div className="flex items-center justify-between px-5 py-6 max-w-lg mx-auto w-full">
+        {step > 1 && step < 3 ? (
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.97 }}
+            onClick={goBack}
+            className="px-5 py-2.5 text-sm font-sans text-[#8A8578] hover:text-[#F5F0E8] transition-colors"
+          >
+            Back
+          </motion.button>
+        ) : (
+          <div />
+        )}
 
-          {step < 3 ? (
-            <motion.button
-              whileHover={canProceed() ? { scale: 1.02 } : undefined}
-              whileTap={canProceed() ? { scale: 0.97 } : undefined}
-              onClick={handleNext}
-              disabled={!canProceed() || isSubmitting}
-              className={`
-                flex-1 py-3.5 rounded-xl font-sans text-sm font-semibold
-                transition-colors duration-200
-                ${
-                  canProceed() && !isSubmitting
-                    ? 'bg-[#C9A84C] text-[#0A0A0A] hover:bg-[#C9A84C]/90 shadow-gold cursor-pointer'
-                    : 'bg-[#2A2A2A] text-[#8A8578] cursor-not-allowed'
-                }
-              `}
-            >
-              {isSubmitting ? (
-                <span className="flex items-center justify-center gap-2">
-                  <motion.span
-                    className="inline-block w-4 h-4 border-2 border-[#0A0A0A]/30 border-t-[#0A0A0A] rounded-full"
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                  />
-                  Saving...
-                </span>
-              ) : step === 2 ? (
-                'Submit & Get Your Word'
-              ) : (
-                'Continue'
-              )}
-            </motion.button>
+        <motion.button
+          whileHover={canAdvance() && !isSubmitting ? { scale: 1.02 } : undefined}
+          whileTap={canAdvance() && !isSubmitting ? { scale: 0.97 } : undefined}
+          transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+          onClick={goNext}
+          disabled={!canAdvance() || isSubmitting}
+          className={`
+            px-7 py-3 rounded-xl font-sans text-sm font-semibold
+            transition-colors duration-200
+            ${
+              canAdvance() && !isSubmitting
+                ? 'bg-[#C9A84C] text-[#0A0A0A] hover:bg-[#C9A84C]/90 shadow-gold cursor-pointer'
+                : 'bg-[#2A2A2A] text-[#8A8578] cursor-not-allowed'
+            }
+          `}
+        >
+          {isSubmitting ? (
+            <span className="flex items-center gap-2">
+              <svg
+                className="animate-spin h-4 w-4"
+                viewBox="0 0 24 24"
+                fill="none"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="3"
+                />
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                />
+              </svg>
+              Saving...
+            </span>
+          ) : step === 3 ? (
+            'Go to Dashboard'
+          ) : step === 2 ? (
+            'Submit & Get My Word'
           ) : (
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.97 }}
-              onClick={handleFinish}
-              disabled={isLoadingAI}
-              className={`
-                flex-1 py-3.5 rounded-xl font-sans text-sm font-semibold
-                transition-colors duration-200
-                ${
-                  isLoadingAI
-                    ? 'bg-[#2A2A2A] text-[#8A8578] cursor-not-allowed'
-                    : 'bg-[#C9A84C] text-[#0A0A0A] hover:bg-[#C9A84C]/90 shadow-gold cursor-pointer'
-                }
-              `}
-            >
-              Let&apos;s Go
-            </motion.button>
+            'Continue'
           )}
-        </div>
+        </motion.button>
       </div>
     </div>
   );
