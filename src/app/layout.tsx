@@ -1,20 +1,18 @@
 import type { Metadata, Viewport } from 'next';
-import { Playfair_Display, DM_Sans } from 'next/font/google';
+import localFont from 'next/font/local';
 import NoiseOverlay from '@/components/layout/NoiseOverlay';
 import './globals.css';
 
-const playfairDisplay = Playfair_Display({
-  subsets: ['latin'],
-  variable: '--font-display',
-  display: 'swap',
-  weight: ['400', '500', '600', '700', '800', '900'],
-});
-
-const dmSans = DM_Sans({
-  subsets: ['latin'],
+const geistSans = localFont({
+  src: './fonts/GeistVF.woff',
   variable: '--font-sans',
   display: 'swap',
-  weight: ['400', '500', '600', '700'],
+});
+
+const geistMono = localFont({
+  src: './fonts/GeistMonoVF.woff',
+  variable: '--font-display',
+  display: 'swap',
 });
 
 export const metadata: Metadata = {
@@ -46,7 +44,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${playfairDisplay.variable} ${dmSans.variable}`}>
+    <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
       <body
         className="font-sans antialiased"
         style={{ backgroundColor: '#0A0A0A' }}

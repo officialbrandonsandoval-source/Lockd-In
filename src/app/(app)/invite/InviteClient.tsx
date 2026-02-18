@@ -11,7 +11,7 @@ import InviteFlow from "@/components/share/InviteFlow";
 // Page Component
 // ---------------------------------------------------------------------------
 
-export default function InvitePage() {
+export default function InviteClient() {
   const { user } = useAuth();
   const { profile, loading: profileLoading } = useProfile();
 

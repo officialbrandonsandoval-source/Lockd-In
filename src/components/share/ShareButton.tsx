@@ -28,6 +28,26 @@ export default function ShareButton({ shareData, className = "" }: ShareButtonPr
 
   const canNativeShare = typeof navigator !== "undefined" && !!navigator.share;
 
+  const copyToClipboard = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(shareData.url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2500);
+    } catch {
+      // Fallback for older browsers
+      const textarea = document.createElement("textarea");
+      textarea.value = shareData.url;
+      textarea.style.position = "fixed";
+      textarea.style.opacity = "0";
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand("copy");
+      document.body.removeChild(textarea);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2500);
+    }
+  }, [shareData.url]);
+
   const handleShare = useCallback(async () => {
     if (canNativeShare) {
       setSharing(true);
@@ -48,27 +68,7 @@ export default function ShareButton({ shareData, className = "" }: ShareButtonPr
     } else {
       await copyToClipboard();
     }
-  }, [canNativeShare, shareData]);
-
-  const copyToClipboard = useCallback(async () => {
-    try {
-      await navigator.clipboard.writeText(shareData.url);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2500);
-    } catch {
-      // Fallback for older browsers
-      const textarea = document.createElement("textarea");
-      textarea.value = shareData.url;
-      textarea.style.position = "fixed";
-      textarea.style.opacity = "0";
-      document.body.appendChild(textarea);
-      textarea.select();
-      document.execCommand("copy");
-      document.body.removeChild(textarea);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2500);
-    }
-  }, [shareData.url]);
+  }, [canNativeShare, shareData, copyToClipboard]);
 
   return (
     <div className={`flex flex-col gap-3 ${className}`}>

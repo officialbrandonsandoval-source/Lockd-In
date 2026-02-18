@@ -28,7 +28,7 @@ function PulseCard({
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.1 }}
-      className="bg-[#1A1A1A] border border-[#2A2A2A] rounded-2xl overflow-hidden"
+      className="bg-[#1A1A1A] border border-[#C9A84C]/20 rounded-2xl overflow-hidden"
     >
       {/* Card Header */}
       <button
@@ -392,7 +392,7 @@ export default function PulsePage() {
               No pulses yet
             </h3>
             <p className="text-[#8A8578] font-sans text-sm max-w-xs mx-auto">
-              Complete daily check-ins throughout the week. Your first Weekly Pulse will be generated on Sunday evening.
+              Your first pulse will generate after a week of check-ins. Keep locking in.
             </p>
           </div>
         </motion.div>

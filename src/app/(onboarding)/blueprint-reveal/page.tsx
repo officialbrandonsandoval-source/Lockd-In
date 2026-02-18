@@ -177,7 +177,7 @@ export default function BlueprintRevealPage() {
   // Reveal sequence states
   const [showBlack, setShowBlack] = useState(true);
   const [showIdentity, setShowIdentity] = useState(false);
-  const [identityDone, setIdentityDone] = useState(false);
+  const [, setIdentityDone] = useState(false);
   const [showPurpose, setShowPurpose] = useState(false);
   const [showFamily, setShowFamily] = useState(false);
   const [showScrollHint, setShowScrollHint] = useState(false);

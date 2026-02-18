@@ -10,6 +10,7 @@ import { formatMorningCheckin } from "@/lib/twilio/messages";
 import { format, subDays } from "date-fns";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
 // ---------------------------------------------------------------------------

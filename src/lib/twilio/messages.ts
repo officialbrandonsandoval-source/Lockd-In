@@ -2,14 +2,8 @@
 // Twilio SMS Messaging Functions (Server-only)
 // =============================================================================
 
-import twilioClient from "./client";
+import { getTwilioClient } from "./client";
 import { APP_NAME } from "@/lib/utils/constants";
-
-const twilioPhoneNumber = process.env.TWILIO_PHONE_NUMBER;
-
-if (!twilioPhoneNumber) {
-  throw new Error("Missing TWILIO_PHONE_NUMBER environment variable");
-}
 
 // ---------------------------------------------------------------------------
 // Core send function
@@ -29,9 +23,14 @@ export async function sendSMS(
   body: string
 ): Promise<SendSMSResult> {
   try {
-    const message = await twilioClient.messages.create({
+    const client = getTwilioClient();
+    const twilioPhoneNumber = process.env.TWILIO_PHONE_NUMBER;
+    if (!twilioPhoneNumber) {
+      throw new Error("Missing TWILIO_PHONE_NUMBER environment variable");
+    }
+    const message = await client.messages.create({
       body,
-      from: twilioPhoneNumber!,
+      from: twilioPhoneNumber,
       to,
     });
 

@@ -9,6 +9,7 @@ import { sendSMS } from "@/lib/twilio/messages";
 import { formatEveningReflection } from "@/lib/twilio/messages";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
 // ---------------------------------------------------------------------------

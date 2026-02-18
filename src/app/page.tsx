@@ -332,7 +332,7 @@ export default function Home() {
           </motion.div>
 
           <div className="space-y-6 sm:space-y-8">
-            {steps.map((step, index) => (
+            {steps.map((step) => (
               <motion.div
                 key={step.number}
                 variants={staggerItem}

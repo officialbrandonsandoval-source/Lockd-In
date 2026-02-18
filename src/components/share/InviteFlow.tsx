@@ -23,7 +23,6 @@ interface InviteFlowProps {
 // ---------------------------------------------------------------------------
 
 export default function InviteFlow({
-  userName,
   referralCode,
   referralStats,
 }: InviteFlowProps) {
