@@ -310,6 +310,59 @@ export default function DashboardClient() {
           <ScriptureOfDay />
         </motion.div>
 
+        {/* Start Blueprint CTA — shown only when user has no blueprint yet */}
+        {!blueprint && (
+          <motion.div variants={itemVariants}>
+            <Link href="/welcome">
+              <motion.div
+                whileHover={{
+                  borderColor: 'rgba(201, 168, 76, 0.6)',
+                  boxShadow: '0 0 32px rgba(201, 168, 76, 0.12)',
+                }}
+                whileTap={{ scale: 0.98 }}
+                className="bg-gradient-to-br from-[#C9A84C]/10 to-[#C9A84C]/5 border border-[#C9A84C]/30 rounded-2xl p-6 flex items-center justify-between cursor-pointer group"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-[#C9A84C]/20 flex items-center justify-center group-hover:bg-[#C9A84C]/30 transition-colors flex-shrink-0">
+                    <svg
+                      className="w-6 h-6 text-[#C9A84C]"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth={1.5}
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M12 5v14M5 12h14" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-[#C9A84C] font-sans">
+                      Start Your Blueprint
+                    </p>
+                    <p className="text-xs text-[#8A8578] font-sans mt-0.5">
+                      Discover your identity, purpose &amp; plan
+                    </p>
+                  </div>
+                </div>
+                <svg
+                  className="w-5 h-5 text-[#C9A84C] group-hover:translate-x-1 transition-transform"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M9 5l7 7-7 7"
+                  />
+                </svg>
+              </motion.div>
+            </Link>
+          </motion.div>
+        )}
+
         {/* View Blueprint link */}
         {blueprint && (
           <motion.div variants={itemVariants}>

@@ -60,21 +60,23 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Redirect authenticated users away from pages they shouldn't access when logged in
-  const publicOnlyPaths = ['/welcome', '/login'];
-  const isPublicOnlyRoute = publicOnlyPaths.some(
+  // Redirect authenticated users away from login (they're already signed in)
+  const loginOnlyPaths = ['/login'];
+  const isLoginRoute = loginOnlyPaths.some(
     (path) => pathname === path || pathname.startsWith(path + '/')
   );
 
-  if (isPublicOnlyRoute && user) {
+  if (isLoginRoute && user) {
     const url = request.nextUrl.clone();
     url.pathname = '/dashboard';
     return NextResponse.redirect(url);
   }
 
-  // FIX 1: Prevent completed users from re-entering onboarding and overwriting their blueprint
-  const onboardingOnlyPaths = ['/assessment', '/generating', '/blueprint-reveal'];
-  const isOnboardingRoute = onboardingOnlyPaths.some(
+  // FIX 1: Prevent completed users from re-entering onboarding and overwriting their blueprint.
+  // This covers /welcome, /assessment, /generating, and /blueprint-reveal.
+  // Non-completed users CAN still access /welcome so the dashboard CTA works correctly.
+  const onboardingPaths = ['/welcome', '/assessment', '/generating', '/blueprint-reveal'];
+  const isOnboardingRoute = onboardingPaths.some(
     (path) => pathname === path || pathname.startsWith(path + '/')
   );
 

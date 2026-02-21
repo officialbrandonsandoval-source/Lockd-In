@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { Streak } from "@/lib/supabase/types";
 import { useAuth } from "./useAuth";
@@ -17,7 +17,8 @@ export interface UseStreakReturn {
 }
 
 export function useStreak(): UseStreakReturn {
-  const supabase = createClient();
+  // Memoize to avoid creating a new Supabase client on every render
+  const supabase = useMemo(() => createClient(), []);
   const { user } = useAuth();
 
   const [streak, setStreak] = useState<Streak | null>(null);
