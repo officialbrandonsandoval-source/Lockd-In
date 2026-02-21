@@ -56,13 +56,12 @@ export async function updateSession(request: NextRequest) {
 
   if (isProtectedRoute && !user) {
     const url = request.nextUrl.clone();
-    url.pathname = '/';
+    url.pathname = '/login';
     return NextResponse.redirect(url);
   }
 
-  // Redirect authenticated users away from onboarding pages they've already completed
-  // (welcome page should redirect to dashboard if already authenticated)
-  const publicOnlyPaths = ['/welcome'];
+  // Redirect authenticated users away from pages they shouldn't access when logged in
+  const publicOnlyPaths = ['/welcome', '/login'];
   const isPublicOnlyRoute = publicOnlyPaths.some(
     (path) => pathname === path || pathname.startsWith(path + '/')
   );
