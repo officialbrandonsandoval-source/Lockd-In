@@ -298,6 +298,26 @@ export default function MorningFlow({ userName }: MorningFlowProps) {
                   />
                 ))}
               </div>
+
+              {/* FIX 7: Priority count helper — shows how many still need to be filled */}
+              {(() => {
+                const filled = priorities.filter((p) => p.trim().length > 0).length;
+                const remaining = 3 - filled;
+                return (
+                  <motion.p
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.3 }}
+                    className={`mt-3 text-xs font-sans text-center transition-colors duration-200 ${
+                      remaining === 0 ? 'text-[#C9A84C]' : 'text-[#8A8578]'
+                    }`}
+                  >
+                    {remaining === 0
+                      ? 'All 3 priorities set — ready to continue.'
+                      : `Add 3 priorities for today (${remaining} remaining)`}
+                  </motion.p>
+                );
+              })()}
             </motion.div>
           )}
 

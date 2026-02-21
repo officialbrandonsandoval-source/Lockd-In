@@ -88,13 +88,12 @@ export async function POST(request: NextRequest) {
     const maritalStatus = responseMap.get("family_relationship_status") || null;
     const childrenResponse = responseMap.get("family_children") || "";
 
-    // Determine if they have children based on their response
+    // FIX 6: Improved hasChildren detection — requires BOTH absence of negatives
+    // AND presence of affirmative indicators to reduce false positives/negatives.
     const hasChildren =
       childrenResponse.trim() !== "" &&
-      !childrenResponse.toLowerCase().includes("no") &&
-      !childrenResponse.toLowerCase().includes("not yet") &&
-      !childrenResponse.toLowerCase().includes("none") &&
-      childrenResponse.toLowerCase() !== "n/a";
+      !childrenResponse.toLowerCase().match(/\b(no|not yet|none|n\/a|nope|don't|doesn't|childless)\b/) &&
+      childrenResponse.toLowerCase().match(/\b(yes|have|has|daughter|son|kid|child|children|\d+)\b/) !== null;
 
     // Build profile update
     const profileUpdate: ProfileUpdate = {};

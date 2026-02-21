@@ -47,9 +47,14 @@ export async function GET(request: NextRequest) {
       const { data: { user } } = await supabase.auth.getUser();
 
       if (user) {
-        const createdAt = new Date(user.created_at).getTime();
-        const lastSignIn = new Date(user.last_sign_in_at || user.created_at).getTime();
-        const isNewUser = Math.abs(lastSignIn - createdAt) < 10000; // within 10 seconds
+        // FIX 2: Reliable new-user check via DB instead of fragile timestamp math
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('onboarding_completed')
+          .eq('id', user.id)
+          .single();
+
+        const isNewUser = !profile?.onboarding_completed;
         redirectTo = isNewUser ? '/welcome' : '/dashboard';
       }
 

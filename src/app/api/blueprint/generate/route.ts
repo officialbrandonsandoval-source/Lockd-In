@@ -87,6 +87,24 @@ export async function POST() {
       );
     }
 
+    const userId = user.id;
+
+    // FIX 5: Rate limit — prevent regenerating within 24 hours
+    const { data: recentBlueprint } = await supabase
+      .from('blueprints')
+      .select('generated_at')
+      .eq('user_id', userId)
+      .eq('status', 'active')
+      .gte('generated_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
+      .single();
+
+    if (recentBlueprint) {
+      return NextResponse.json(
+        { error: 'Blueprint was recently generated. Please wait 24 hours before regenerating.' },
+        { status: 429 }
+      );
+    }
+
     // Fetch assessment responses
     const { data: rawResponses, error: fetchError } = await supabase
       .from("assessment_responses")
@@ -172,17 +190,28 @@ export async function POST() {
 
     const blueprintData = result.data as Record<string, unknown>;
 
+    // FIX 4: Determine the next version number dynamically instead of hardcoding 1
+    const { data: existingBlueprint } = await supabase
+      .from('blueprints')
+      .select('version')
+      .eq('user_id', userId)
+      .order('version', { ascending: false })
+      .limit(1)
+      .single();
+
+    const nextVersion = (existingBlueprint?.version ?? 0) + 1;
+
     // Archive any existing active blueprints
     await supabase
       .from("blueprints")
       .update({ status: "archived" } as any) // eslint-disable-line @typescript-eslint/no-explicit-any
-      .eq("user_id", user.id)
+      .eq("user_id", userId)
       .eq("status", "active");
 
     // Insert the new blueprint
     const insertPayload = {
-      user_id: user.id,
-      version: 1,
+      user_id: userId,
+      version: nextVersion,
       status: "active",
       identity_statement:
         (blueprintData.identity_statement as string) || null,

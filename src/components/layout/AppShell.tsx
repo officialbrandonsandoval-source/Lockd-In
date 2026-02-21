@@ -3,14 +3,18 @@
 import { useRouter } from 'next/navigation';
 import Header from './Header';
 import BottomNav from './BottomNav';
+import { useStreak } from '@/hooks/useStreak';
 
 interface AppShellProps {
   children: React.ReactNode;
   streakCount?: number;
 }
 
-export default function AppShell({ children, streakCount = 0 }: AppShellProps) {
+export default function AppShell({ children, streakCount }: AppShellProps) {
   const router = useRouter();
+  // FIX 3: Fetch real streak count instead of using hardcoded 0
+  const { streak } = useStreak();
+  const resolvedStreakCount = streakCount ?? (streak?.current_streak ?? 0);
 
   return (
     <div
@@ -22,7 +26,7 @@ export default function AppShell({ children, streakCount = 0 }: AppShellProps) {
     >
       {/* Header */}
       <Header
-        streakCount={streakCount}
+        streakCount={resolvedStreakCount}
         onSettingsClick={() => router.push('/settings')}
       />
 

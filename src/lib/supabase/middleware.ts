@@ -72,5 +72,25 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  // FIX 1: Prevent completed users from re-entering onboarding and overwriting their blueprint
+  const onboardingOnlyPaths = ['/assessment', '/generating', '/blueprint-reveal'];
+  const isOnboardingRoute = onboardingOnlyPaths.some(
+    (path) => pathname === path || pathname.startsWith(path + '/')
+  );
+
+  if (isOnboardingRoute && user) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('onboarding_completed')
+      .eq('id', user.id)
+      .single();
+
+    if (profile?.onboarding_completed === true) {
+      const url = request.nextUrl.clone();
+      url.pathname = '/dashboard';
+      return NextResponse.redirect(url);
+    }
+  }
+
   return supabaseResponse;
 }
